@@ -1,0 +1,4 @@
+コマンドプロンプトに以下をコピペ
+netstat -ano | findstr :7860
+
+taskkill /PID 12345 /F

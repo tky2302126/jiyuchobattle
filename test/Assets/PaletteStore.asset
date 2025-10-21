@@ -1,0 +1,152 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0edd4d6dec9974f11ba4b078ca3a0e1e, type: 3}
+  m_Name: PaletteStore
+  m_EditorClassIdentifier: 
+  _colorPalette:
+    _entries:
+      _keys:
+      - d8699eff-94e2-43ff-bf37-db29fa153608
+      - b28f2111-121b-4bd1-bf33-d10c7709142c
+      - 3d4a6bc4-4e0d-439f-9efc-0c40694d8c98
+      _values:
+      - _id: d8699eff-94e2-43ff-bf37-db29fa153608
+        _name:
+          _value: Noun
+        _values:
+          _keys:
+          - 77e5763a-2942-4db1-a380-dca78b8814ba
+          _values:
+          - _value: {r: 0.8018868, g: 0.56657946, b: 0.19290671, a: 1}
+      - _id: b28f2111-121b-4bd1-bf33-d10c7709142c
+        _name:
+          _value: Adjective
+        _values:
+          _keys:
+          - 77e5763a-2942-4db1-a380-dca78b8814ba
+          _values:
+          - _value: {r: 0.28924885, g: 0.33041474, b: 0.9433962, a: 1}
+      - _id: 3d4a6bc4-4e0d-439f-9efc-0c40694d8c98
+        _name:
+          _value: Verb
+        _values:
+          _keys:
+          - 77e5763a-2942-4db1-a380-dca78b8814ba
+          _values:
+          - _value: {r: 0.9716981, g: 0.22459061, b: 0.27679136, a: 1}
+    _themes:
+      _keys:
+      - 77e5763a-2942-4db1-a380-dca78b8814ba
+      _values:
+      - _id: 77e5763a-2942-4db1-a380-dca78b8814ba
+        _name:
+          _value: Default
+    _entryOrders:
+      _ids:
+      - d8699eff-94e2-43ff-bf37-db29fa153608
+      - b28f2111-121b-4bd1-bf33-d10c7709142c
+      - 3d4a6bc4-4e0d-439f-9efc-0c40694d8c98
+    _themeOrders:
+      _ids:
+      - 77e5763a-2942-4db1-a380-dca78b8814ba
+    _activeThemeId: 77e5763a-2942-4db1-a380-dca78b8814ba
+  _gradientPalette:
+    _entries:
+      _keys:
+      - 14287626-0302-4373-a9a6-2ae5d017b6a1
+      _values:
+      - _id: 14287626-0302-4373-a9a6-2ae5d017b6a1
+        _name:
+          _value: Timer
+        _values:
+          _keys:
+          - 5f706dd0-9f83-4dd2-a1b1-b760f5924c92
+          _values:
+          - _value:
+              serializedVersion: 2
+              key0: {r: 0.058648646, g: 1, b: 0.0141509175, a: 1}
+              key1: {r: 1, g: 0, b: 0, a: 1}
+              key2: {r: 0, g: 0, b: 0, a: 0}
+              key3: {r: 0, g: 0, b: 0, a: 0}
+              key4: {r: 0, g: 0, b: 0, a: 0}
+              key5: {r: 0, g: 0, b: 0, a: 0}
+              key6: {r: 0, g: 0, b: 0, a: 0}
+              key7: {r: 0, g: 0, b: 0, a: 0}
+              ctime0: 0
+              ctime1: 65535
+              ctime2: 0
+              ctime3: 0
+              ctime4: 0
+              ctime5: 0
+              ctime6: 0
+              ctime7: 0
+              atime0: 0
+              atime1: 65535
+              atime2: 0
+              atime3: 0
+              atime4: 0
+              atime5: 0
+              atime6: 0
+              atime7: 0
+              m_Mode: 2
+              m_ColorSpace: 0
+              m_NumColorKeys: 2
+              m_NumAlphaKeys: 2
+    _themes:
+      _keys:
+      - 5f706dd0-9f83-4dd2-a1b1-b760f5924c92
+      _values:
+      - _id: 5f706dd0-9f83-4dd2-a1b1-b760f5924c92
+        _name:
+          _value: Default
+    _entryOrders:
+      _ids:
+      - 14287626-0302-4373-a9a6-2ae5d017b6a1
+    _themeOrders:
+      _ids:
+      - 5f706dd0-9f83-4dd2-a1b1-b760f5924c92
+    _activeThemeId: 5f706dd0-9f83-4dd2-a1b1-b760f5924c92
+  _characterStylePalette:
+    _entries:
+      _keys: []
+      _values: []
+    _themes:
+      _keys:
+      - 36820846-c4a3-4326-8f41-0649e1a561f8
+      _values:
+      - _id: 36820846-c4a3-4326-8f41-0649e1a561f8
+        _name:
+          _value: Default
+    _entryOrders:
+      _ids: []
+    _themeOrders:
+      _ids:
+      - 36820846-c4a3-4326-8f41-0649e1a561f8
+    _activeThemeId: 36820846-c4a3-4326-8f41-0649e1a561f8
+  _characterStyleTMPPalette:
+    _entries:
+      _keys: []
+      _values: []
+    _themes:
+      _keys:
+      - 97b40c31-4821-4e7b-87ca-707436cbdfa5
+      _values:
+      - _id: 97b40c31-4821-4e7b-87ca-707436cbdfa5
+        _name:
+          _value: Default
+    _entryOrders:
+      _ids: []
+    _themeOrders:
+      _ids:
+      - 97b40c31-4821-4e7b-87ca-707436cbdfa5
+    _activeThemeId: 97b40c31-4821-4e7b-87ca-707436cbdfa5
+  _missingEntryErrorLevel: 1

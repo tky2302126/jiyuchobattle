@@ -1,0 +1,32 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class MonsterCard : CardDataBase
+{
+    [Header("合成元カード")]
+    public List<CardDataBase> sourceCards = new List<CardDataBase>();
+
+    [Header("ステータス")]
+    public int HP;
+    public int Attack;
+    public int Defense;
+    [Range(0f, 1f)]
+    public float Evasion; //回避率 0~1の割合
+
+    [Header("攻撃")]
+    public List<Command> Skills = new List<Command>(); // 今後Commandクラスに置き換え
+    public float AttackInterval; // 攻撃頻度（秒）
+
+    [Header("特攻対象（任意）")]
+    public CardDataBase targetCard; // 特定のカードに対して特攻
+    public float specialMultiplier = 1f; // 特攻倍率（例: 2.0 = 2倍ダメージ）
+
+    public override string CardName
+    {
+        get => cardName;
+        set => cardName = value;
+    }
+
+    [SerializeField] private string cardName;
+}
