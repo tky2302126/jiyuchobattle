@@ -16,10 +16,7 @@ public class CPUController : MonoBehaviour
     [SerializeField] private Transform cpuFieldSlot;
     [SerializeField] private MonsterCardGenerator cardGenerator;
 
-    [Header("CPU動作設定")]
-    [SerializeField] private int cardCountToDeal = 6; // 配るカード数
-    [SerializeField] private float interval = 0.5f;   // 配布間隔
-
+    
     private List<GameObject> cpuCardsInFieldSlot = new();
     private List<GameObject> cpuCardsInHandSlot = new();
 
@@ -50,7 +47,7 @@ public class CPUController : MonoBehaviour
     /// <summary>
     /// 名詞・形容詞・動詞カードを2枚ずつCPUに配る
     /// </summary>
-    private async UniTask DealInitialCardsAsync()
+    public async UniTask DealInitialCardsAsync()
     {
         var cardDataList = cardManager.cardDataList;
         if (cardDataList == null || cardDataList.Count == 0)
@@ -95,32 +92,6 @@ public class CPUController : MonoBehaviour
 
             await UniTask.Delay(200); // 配布間隔を少し空ける
         }
-    }
-
-    /// <summary>
-    /// アニメーションでカードを移動
-    /// </summary>
-    private async UniTask MoveCardToSlotAsync(GameObject cardObj, Vector3 targetPos)
-    {
-        Vector3 startPos = cardObj.transform.position;
-        Quaternion startRot = cardObj.transform.rotation;
-        Quaternion endRot = Quaternion.identity;
-
-        float elapsed = 0f;
-        float moveDuration = 0.5f;
-        while (elapsed < moveDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = AnimationCurve.EaseInOut(0, 0, 1, 1).Evaluate(elapsed / moveDuration);
-
-            cardObj.transform.position = Vector3.Lerp(startPos, targetPos, t);
-            cardObj.transform.rotation = Quaternion.Slerp(startRot, endRot, t);
-
-            await UniTask.Yield();
-        }
-
-        cardObj.transform.position = targetPos;
-        cardObj.transform.rotation = endRot;
     }
 
     private void UpdateCardPositions()
@@ -172,21 +143,6 @@ public class CPUController : MonoBehaviour
             case cardCategory.Adj: return 1;
             case cardCategory.Verb: return 2;
             default: return 99;
-        }
-    }
-
-    /// <summary>
-    /// CPUにカードを配る
-    /// </summary>
-    private async UniTask DealCardsAsync()
-    {
-        Debug.Log("🃏 CPUにカードを配布中...");
-
-        for (int i = 0; i < cardCountToDeal; i++)
-        {
-            GameObject card = Instantiate(cardPrefab, cpuHandSlot.position + Vector3.right * i * 0.3f, Quaternion.identity);
-            cpuCardsInHandSlot.Add(card);
-            await UniTask.Delay((int)(interval * 1000));
         }
     }
 
@@ -251,12 +207,13 @@ public class CPUController : MonoBehaviour
             return;
         }
 
-        await cardGenerator.CreateMonsterCardAsync(
+        var monsterCardObj = await cardGenerator.CreateMonsterCardAsync(
             cpuCardsInFieldSlot,
             cpuFieldSlot,
             isPlayer: false
-            );        
+            );
 
+        if(monsterCardObj != null) cpuCardsInFieldSlot.Add(monsterCardObj);
         Debug.Log("CPUカードのイラスト生成が完了しました。");
     }
 }

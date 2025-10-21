@@ -95,7 +95,7 @@ public class CardManager : MonoBehaviour
 
     private async void Start()
     {
-        await AddInitialCardsAsync();
+        await DealInitialCardsAsync();
     }
 
     private void Update()
@@ -113,7 +113,7 @@ public class CardManager : MonoBehaviour
     /// <summary>
     /// ゲーム開始時に名詞・動詞・形容詞カードを2枚ずつ加える
     /// </summary>
-    private async UniTask AddInitialCardsAsync()
+    public async UniTask DealInitialCardsAsync()
     {
         // 各タイプごとにフィルタリング
         List<CardDataBase> nounCards = cardDataList.FindAll(c => c is NounData);
