@@ -37,7 +37,7 @@ public enum AttackCategory
 [CreateAssetMenu(fileName = "NewCommandAction", menuName = "Card/Action/BaseAction")]
 public abstract class CommandAction : ScriptableObject
 {
-    public abstract void Execute(GameObject caster, GameObject target);
+    public abstract void Execute(MonsterCard caster, MonsterCard target);
 }
 
 // 例：攻撃アクション
@@ -45,7 +45,7 @@ public abstract class CommandAction : ScriptableObject
 public class AttackAction : CommandAction
 {
     public int damage;
-    public override void Execute(GameObject caster, GameObject target)
+    public override void Execute(MonsterCard caster, MonsterCard target)
     {
         Debug.Log($"{caster.name} attacks {target.name} for {damage} damage!");
     }
@@ -55,11 +55,13 @@ public class AttackAction : CommandAction
 [CreateAssetMenu(fileName = "NewCommand", menuName = "Card/コマンド", order = 3)]
 public class Command : ScriptableObject
 {
-    public string commandName;
+    public string CommandName;
     public AttackCategory category;
     public CommandAction action;
 
-    public void Execute(GameObject caster, GameObject target) // 引数は仮置き 
+    public int targetNum;
+
+    public void Execute(MonsterCard caster, MonsterCard target) // 引数は仮置き 
     {
         action?.Execute(caster, target);
     }

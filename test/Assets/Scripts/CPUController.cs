@@ -69,6 +69,13 @@ public class CPUController : MonoBehaviour
         Debug.Log("CPUに名詞・形容詞・動詞カードを2枚ずつ配布しました。");
     }
 
+
+    public async UniTask SetCardAndGenerateCardAsync() 
+    {
+        await SetCardsToFieldAsync();
+        GenerateMonsterCardAsync().Forget();
+
+    }
     /// <summary>
     /// 指定カテゴリのカードを生成・配布
     /// </summary>

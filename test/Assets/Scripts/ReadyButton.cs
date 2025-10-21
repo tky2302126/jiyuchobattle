@@ -31,8 +31,16 @@ public class ReadyButton : MonoBehaviour
         
     }
 
-    public async Task OnClick() 
+    public void OnClick() 
     {
+        var task = OnClickTask();
+
+    }
+
+    public async Task OnClickTask() 
+    {
+        CPU.SetCardAndGenerateCardAsync().Forget(); // 仮置き
+        
         var monsterCardObj = await cardGenerator.CreateMonsterCardAsync(
             dragmanager.CardsInFieldSlot,
             spawnPoint,
@@ -40,8 +48,8 @@ public class ReadyButton : MonoBehaviour
             );
 
         if(monsterCardObj != null) dragmanager.CardsInFieldSlot.Add(monsterCardObj);
-        CPU.ExecuteCPUActionAsync().Forget(); // 仮置き
 
+        BattleManager.Instance.TryStartBattleAsync().Forget();
     }
 
 }

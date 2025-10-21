@@ -629,8 +629,6 @@ MonoBehaviour:
   cpuHandSlot: {fileID: 1720641037}
   cpuFieldSlot: {fileID: 1123775691}
   cardGenerator: {fileID: 1373256940}
-  cardCountToDeal: 6
-  interval: 0.5
 --- !u!1 &429184173
 GameObject:
   m_ObjectHideFlags: 0
@@ -1451,6 +1449,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3cda844b3293034aac54beeb508d33a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerController: {fileID: 40830523}
+  cpuController: {fileID: 400011013}
+  tickInterval: 0.1
 --- !u!1 &1289566475
 GameObject:
   m_ObjectHideFlags: 0

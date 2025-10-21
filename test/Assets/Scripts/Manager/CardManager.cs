@@ -95,7 +95,7 @@ public class CardManager : MonoBehaviour
 
     private async void Start()
     {
-        await DealInitialCardsAsync();
+        // await DealInitialCardsAsync();
     }
 
     private void Update()
