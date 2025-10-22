@@ -15,7 +15,7 @@ public class MonsterCard : CardDataBase
     public float Evasion; //回避率 0~1の割合
 
     [Header("攻撃")]
-    public List<Command> Skills = new List<Command>(); // 今後Commandクラスに置き換え
+    public List<Command> Skills = new List<Command>(); 
     public float AttackInterval; // 攻撃頻度（秒）
 
     [Header("特攻対象（任意）")]

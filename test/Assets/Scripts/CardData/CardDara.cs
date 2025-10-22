@@ -1,6 +1,8 @@
-﻿using System;
+﻿using JetBrains.Annotations;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.CullingGroup;
 
 public enum cardCategory 
 {
@@ -55,14 +57,59 @@ public class AttackAction : CommandAction
 [CreateAssetMenu(fileName = "NewCommand", menuName = "Card/コマンド", order = 3)]
 public class Command : ScriptableObject
 {
-    public string CommandName;
-    public AttackCategory category;
-    public CommandAction action;
+    public string CommandName;      // 表示名
+    public AttackCategory category; // カテゴリ
+    public int power;               // 威力
 
-    public int targetNum;
+    public int targetNum;           // 対象数
 
-    public void Execute(MonsterCard caster, MonsterCard target) // 引数は仮置き 
-    {
-        action?.Execute(caster, target);
-    }
+    public CommandEffect action;    // 付帯効果
+}
+
+[CreateAssetMenu(fileName = "NewCommand", menuName = "Card/コマンドエフェクト", order = 4)]
+public class CommandEffect : ScriptableObject
+{
+    [Header("自分へのパラメータ変化")]
+    public StatChange[] selfChanges;
+
+    [Header("相手へのパラメータ変化")]
+    public StatChange[] targetChanges;
+}
+
+[System.Serializable]
+public class StatChange
+{
+    public StatType statType;
+    [Range(-6, 6)] public int changeAmount;
+
+    [Header("持続管理")]
+    public EffectDurationType durationType;
+    public int durationValue; // 例：nターン、n回行動など
+}
+
+public enum StatType
+{
+    Attack,
+    Defense,
+    Evasion
+}
+
+public enum EffectDurationType
+{
+    Permanent,      // 永続
+    UntilNextAttack, // 次の攻撃まで
+    TurnCount,      // nターンまで
+    ActionCount     // n回行動まで
+}
+
+[Flags]
+public enum StatusCondition
+{
+    None = 0,
+    Paralyze = 1 << 0,  // 麻痺
+    Burn = 1 << 1,  // 火傷
+    Poison = 1 << 2,  // 毒
+    Sleep = 1 << 3,  // 眠り
+    Freeze = 1 << 4,  // 凍り
+    Confuse = 1 << 5   // 混乱
 }

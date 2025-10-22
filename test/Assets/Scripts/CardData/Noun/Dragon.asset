@@ -19,7 +19,5 @@ MonoBehaviour:
   defense: 0
   evasion: 0
   skills:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: fd9f996ae029ba94aa45fd9761fd4dda, type: 2}
   attackInterval: 2
