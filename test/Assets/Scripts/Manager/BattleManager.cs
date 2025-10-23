@@ -35,10 +35,17 @@ public class BattleManager : MonoBehaviour
     {
         public MonsterCard Monster;
         public float ElapsedTime = 0f;
+        public int CurrentHP;
+        public List<StatChange> changes;
+        public MonsterCondition Condition;
 
+        public bool IsAlive => CurrentHP > 0;
         public MonsterStatus(MonsterCard monster)
         {
             Monster = monster;
+            CurrentHP = monster.HP;
+            changes = new List<StatChange>();
+
         }
     }
 
@@ -93,6 +100,13 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
+        // MonsterCard → MonsterStatus に変換
+        playerStatuses.Clear();
+        foreach (var m in playerMonsters) playerStatuses.Add(new MonsterStatus(m));
+
+        cpuStatuses.Clear();
+        foreach (var m in cpuMonsters) cpuStatuses.Add(new MonsterStatus(m));
+
         Debug.Log("⚔️ バトル開始！");
         currentState = BattleState.InBattle;
         isBattleRunning = true;
@@ -105,14 +119,6 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private async UniTask BattleLoopAsync()
     {
-        float elapsed = 0f;
-
-        playerStatuses.Clear();
-        foreach (var m in playerMonsters) playerStatuses.Add(new MonsterStatus(m));
-
-        cpuStatuses.Clear();
-        foreach (var m in cpuMonsters) cpuStatuses.Add(new MonsterStatus(m));
-
         while (isBattleRunning)
         {
             // 勝敗チェック
@@ -122,8 +128,6 @@ public class BattleManager : MonoBehaviour
                 break;
             }
 
-            elapsed += tickInterval;
-
             // プレイヤー側の攻撃処理
             foreach (var status in playerStatuses)
             {
@@ -132,9 +136,9 @@ public class BattleManager : MonoBehaviour
                 status.ElapsedTime += tickInterval;
                 if (status.ElapsedTime >= status.Monster.AttackInterval)
                 {
-                    var target = GetRandomAlive(cpuMonsters);
-                    if (target != null)
-                        PerformAttack(status.Monster, cpuMonsters);
+                    // var target = GetRandomAlive(cpuStatuses);
+                    // if (target != null)
+                        PerformAttack(status, cpuStatuses);
 
                     status.ElapsedTime = 0f; // 攻撃後にリセット
 
@@ -145,17 +149,17 @@ public class BattleManager : MonoBehaviour
             // CPU側の攻撃処理
             foreach (var status in cpuStatuses)
             {
-                    if (status.Monster.HP <= 0) continue;
+                if (status.Monster.HP <= 0) continue;
 
-                    status.ElapsedTime += tickInterval;
-                    if (status.ElapsedTime >= status.Monster.AttackInterval)
-                    {
-                        var target = GetRandomAlive(playerMonsters);
-                        if (target != null)
-                            PerformAttack(status.Monster, playerMonsters);
+                status.ElapsedTime += tickInterval;
+                if (status.ElapsedTime >= status.Monster.AttackInterval)
+                {
+                   // var target = GetRandomAlive(playerStatuses);
+                   // if (target != null)
+                        PerformAttack(status, playerStatuses);
 
-                        status.ElapsedTime = 0f;
-                    }
+                    status.ElapsedTime = 0f;
+                }
             }
 
             await UniTask.Delay((int)(tickInterval * 1000));
@@ -169,8 +173,8 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private bool CheckBattleEnd()
     {
-        bool playerAllDead = playerMonsters.TrueForAll(m => m.HP <= 0);
-        bool cpuAllDead = cpuMonsters.TrueForAll(m => m.HP <= 0);
+        bool playerAllDead = playerStatuses.TrueForAll(s => !s.IsAlive);
+        bool cpuAllDead = cpuStatuses.TrueForAll(s => !s.IsAlive);
 
         if (playerAllDead || cpuAllDead)
         {
@@ -206,9 +210,9 @@ public class BattleManager : MonoBehaviour
     /// <summary>
     /// ランダムに生きているモンスターを取得
     /// </summary>
-    private MonsterCard GetRandomAlive(List<MonsterCard> list)
+    private MonsterStatus GetRandomAlive(List<MonsterStatus> list)
     {
-        var alive = list.FindAll(m => m.HP > 0);
+        var alive = list.FindAll(m => m.CurrentHP > 0);
         if (alive.Count == 0) return null;
         return alive[Random.Range(0, alive.Count)];
     }
@@ -216,20 +220,34 @@ public class BattleManager : MonoBehaviour
     /// <summary>
     /// 攻撃処理（即時実行）
     /// </summary>
-    private void PerformAttack(MonsterCard attacker, List<MonsterCard> targets)
+    private void PerformAttack(MonsterStatus attacker, List<MonsterStatus> targets)
     {
         if (attacker == null || targets == null || targets.Count == 0) return;
 
+        var Attacker = attacker.Monster;
+
         // 1. コマンドをランダム抽選
         Command selectedCommand = null;
-        if (attacker.Skills != null && attacker.Skills.Count > 0)
+        if (Attacker.Skills != null && Attacker.Skills.Count > 0)
         {
-            selectedCommand = attacker.Skills[Random.Range(0, attacker.Skills.Count)];
-            Debug.Log($"{attacker.CardName} が {selectedCommand.CommandName} を使用！");
+            selectedCommand = Attacker.Skills[Random.Range(0, Attacker.Skills.Count)];
+            Debug.Log($"{Attacker.CardName} が {selectedCommand.CommandName} を使用！");
+        }
+
+        if (selectedCommand == null)
+        {
+            Debug.LogWarning($"{Attacker.CardName} はスキルを持っていません。");
+            return;
+        }
+
+        if (selectedCommand.IsSelf) 
+        {
+            ApplyEffect(attacker, attacker);
+            return;
         }
 
         // 2. コマンドの対象を決める
-        List<MonsterCard> chosenTargets = new();
+        List<MonsterStatus> chosenTargets = new();
 
         if (selectedCommand.targetNum >= targets.Count)
         {
@@ -238,7 +256,7 @@ public class BattleManager : MonoBehaviour
         else
         {
             // ランダムに targetNum 体選ぶ
-            var alive = new List<MonsterCard>(targets);
+            var alive = new List<MonsterStatus>(targets);
             for (int i = 0; i < selectedCommand.targetNum; i++)
             {
                 if (alive.Count == 0) break;
@@ -252,31 +270,74 @@ public class BattleManager : MonoBehaviour
         foreach (var target in chosenTargets)
         {
             // 回避判定
-            if (Random.value < target.Evasion)
+            if (Random.value < target.Monster.Evasion)
             {
-                Debug.Log($"💨 {target.CardName} が {selectedCommand.CommandName} を回避！");
+                Debug.Log($"💨 {target.Monster.CardName} が {selectedCommand.CommandName} を回避！");
                 continue;
             }
 
             // CommandAction による攻撃処理
-
-            selectedCommand.Execute(attacker, target);
-
-            // 特攻補正（MonsterCard 側の targetCard を参照）
-            if (attacker.targetCard != null && target.CardName == attacker.targetCard.CardName)
-            {
-                int extraDamage = Mathf.RoundToInt(attacker.Attack * (attacker.specialMultiplier - 1));
-                target.HP -= extraDamage;
-                Debug.Log($"🔥 {attacker.CardName} の特攻！ {target.CardName} に追加 {extraDamage} ダメージ！");
-            }
+            // *用実装
+            var damage = CalculateDamage(attacker, target, selectedCommand);
+            TakeDamage(target, damage);
+            ApplyEffect(attacker, target);
 
             // HP0チェック
-            if (target.HP <= 0)
+            if (target.CurrentHP <= 0)
             {
-                target.HP = 0;
-                Debug.Log($"💀 {target.CardName} は倒れた！");
+                Debug.Log($"💀 {target.Monster.CardName} は倒れた！");
             }
         }
     }
+
+    /// <summary>
+    /// ダメージ計算（数値のみ算出）
+    /// </summary>
+    private int CalculateDamage(MonsterStatus caster, MonsterStatus target, Command Selected)
+    {
+        int baseDamage = caster.Monster.Attack;
+
+        bool hasTarget = target.Monster.sourceCards != null &&
+                         target.Monster.sourceCards.Exists(src => src != null && src == caster.Monster.targetCard);
+
+        // 特攻補正
+        if (caster.Monster.targetCard != null &&
+            target.Monster.CardName == caster.Monster.targetCard.CardName)
+        {
+            baseDamage = Mathf.RoundToInt(baseDamage * caster.Monster.specialMultiplier);
+            Debug.Log($"🔥 {caster.Monster.CardName} の特攻！ こうかはばつぐんだ！");
+        }
+
+        // クリティカルなどを後で追加可能
+        // if (Random.value < caster.Monster.CriticalRate) baseDamage *= 2;
+
+        return Mathf.Max(0, baseDamage);
+    }
+
+    /// <summary>
+    /// ダメージ適用（HP減少・ログ・死亡判定）
+    /// </summary>
+    private void TakeDamage(MonsterStatus target, int damage)
+    {
+        target.CurrentHP -= damage;
+        if (target.CurrentHP < 0) target.CurrentHP = 0;
+
+        Debug.Log($"💥 {target.Monster.CardName} は {damage} ダメージを受けた！（残りHP: {target.CurrentHP}）");
+
+        if (target.CurrentHP == 0)
+        {
+            Debug.Log($"💀 {target.Monster.CardName} は倒れた！");
+        }
+    }
+
+    /// <summary>
+    /// 効果適用（ダメージや状態異常など、コマンド効果全般）
+    /// </summary>
+    private void ApplyEffect(MonsterStatus caster, MonsterStatus target)
+    {
+        // 今後ここにバフ・デバフ・状態異常などを追加
+        // e.g. if (command.HasStatusEffect) ApplyStatus(target, command.StatusEffect);
+    }
 }
+
 

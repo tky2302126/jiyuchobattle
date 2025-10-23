@@ -62,6 +62,7 @@ public class Command : ScriptableObject
     public int power;               // 威力
 
     public int targetNum;           // 対象数
+    public bool IsSelf;             // 自身に対する効果かどうか
 
     public CommandEffect action;    // 付帯効果
 }
@@ -80,7 +81,7 @@ public class CommandEffect : ScriptableObject
 public class StatChange
 {
     public StatType statType;
-    [Range(-6, 6)] public int changeAmount;
+    public int changeAmount;
 
     [Header("持続管理")]
     public EffectDurationType durationType;
@@ -103,7 +104,7 @@ public enum EffectDurationType
 }
 
 [Flags]
-public enum StatusCondition
+public enum MonsterCondition
 {
     None = 0,
     Paralyze = 1 << 0,  // 麻痺
