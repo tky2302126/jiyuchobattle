@@ -119,6 +119,7 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private async UniTask BattleLoopAsync()
     {
+        Debug.Log("戦闘ループを開始します");
         while (isBattleRunning)
         {
             // 勝敗チェック
@@ -337,6 +338,18 @@ public class BattleManager : MonoBehaviour
     {
         // 今後ここにバフ・デバフ・状態異常などを追加
         // e.g. if (command.HasStatusEffect) ApplyStatus(target, command.StatusEffect);
+    }
+
+    public void SetMonster(ref MonsterCard monsterCard, bool isPlayer) 
+    {
+        if (isPlayer) 
+        {
+            playerMonsters.Add(monsterCard);
+        }
+        else 
+        {
+            cpuMonsters.Add(monsterCard);
+        }
     }
 }
 

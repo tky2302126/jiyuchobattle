@@ -225,7 +225,7 @@ public class MonsterCardGenerator : MonoBehaviour
         bool isPlayer)
     {
         Vector3 startOffset = isPlayer ? new Vector3(0, 0, -2f) : new Vector3(0, 0, 2f);
-        Quaternion startRot = isPlayer ? Quaternion.Euler(0, 180, 0) : Quaternion.Euler(0, 180, 0);
+        Quaternion startRot = isPlayer ? Quaternion.Euler(0, 180, 0) : Quaternion.Euler(0, 180, 180);
         Quaternion endRot = isPlayer ? Quaternion.Euler(0, 0, 0) : Quaternion.Euler(0, 0, 180);
 
         GameObject newCard = Instantiate(cardPrefab, spawnPoint.position + startOffset, startRot);
@@ -234,7 +234,7 @@ public class MonsterCardGenerator : MonoBehaviour
         await newCard.transform.DOMove(spawnPoint.position, duration).SetEase(Ease.OutQuad).AsyncWaitForCompletion();
 
         // --- 情報設定 ---
-        var presenter = newCard.GetComponent<CardPresenter>();
+        var presenter = newCard.AddComponent<CardPresenter>();
         if (presenter != null) presenter.cardData = monsterCard;
 
         var textSetter = newCard.GetComponent<CardTextSetter>();

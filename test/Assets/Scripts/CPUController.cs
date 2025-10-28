@@ -20,6 +20,8 @@ public class CPUController : MonoBehaviour
     private List<GameObject> cpuCardsInFieldSlot = new();
     private List<GameObject> cpuCardsInHandSlot = new();
 
+    public bool IsReady { get; private set; } = false;
+
     private void Update()
     {
         // CキーでCPUアクションを実行
@@ -72,9 +74,10 @@ public class CPUController : MonoBehaviour
 
     public async UniTask SetCardAndGenerateCardAsync() 
     {
+        IsReady = false;
         await SetCardsToFieldAsync();
-        GenerateMonsterCardAsync().Forget();
-
+        await GenerateMonsterCardAsync();
+        IsReady = true;
     }
     /// <summary>
     /// 指定カテゴリのカードを生成・配布
@@ -221,6 +224,12 @@ public class CPUController : MonoBehaviour
             );
 
         if(monsterCardObj != null) cpuCardsInFieldSlot.Add(monsterCardObj);
+        var presenter = monsterCardObj.GetComponent<CardPresenter>();
+        if (presenter != null)
+        {
+            var monsterCard = presenter.cardData as MonsterCard;
+            BattleManager.Instance.SetMonster(ref monsterCard, isPlayer: false);
+        }
         Debug.Log("CPUカードのイラスト生成が完了しました。");
     }
 }

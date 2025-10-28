@@ -17,6 +17,6 @@ public class CardColorSetter : SpriteColorChanger
         else if (cardData is AdjectiveData)
             SetColorByEntryId(ColorEntry.Adjective.ToEntryId());
         else
-            SetColor(Color.white);
+            SetColor(Color.black);
     }
 }
