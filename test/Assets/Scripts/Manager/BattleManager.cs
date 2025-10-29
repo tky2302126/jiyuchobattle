@@ -76,14 +76,14 @@ public class BattleManager : MonoBehaviour
     private async UniTask InitializeAsync()
     {
         currentState = BattleState.Initialize;
-        Debug.Log("🟢 バトル初期化開始");
+        Debug.Log("バトル初期化開始");
 
         // プレイヤーとCPUにカードを配布
         await playerController.DealInitialCardsAsync();
         await cpuController.DealInitialCardsAsync();
 
         currentState = BattleState.WaitingForReady;
-        Debug.Log("✅ 配布完了。各陣営のモンスター生成を待機中...");
+        Debug.Log("配布完了。各陣営のモンスター生成を待機中...");
     }
 
     /// <summary>

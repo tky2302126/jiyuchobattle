@@ -93,7 +93,7 @@ public class CardManager : MonoBehaviour
         Debug.Log($"Attached {selectedCard.name} to {cardObj.name} and added to hand slot");
     }
 
-    private async void Start()
+    private void Start()
     {
         // await DealInitialCardsAsync();
     }

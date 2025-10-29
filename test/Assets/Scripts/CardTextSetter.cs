@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class CardTextSetter : MonoBehaviour
 {
@@ -10,9 +11,35 @@ public class CardTextSetter : MonoBehaviour
     [SerializeField] TextMeshPro description;
     private Camera mainCamera;
 
+    private bool isHovered = false;
+
     private void Start()
     {
         mainCamera = Camera.main;
+    }
+
+    void Update()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            if (hit.collider.gameObject == gameObject)
+            {
+                if (!isHovered)
+                {
+                    isHovered = true;
+                    CardTooltip.Instance.Show(description.text, Input.mousePosition);
+                }
+                return; // 他のカードを誤ってHideしないようにここでリターン
+            }
+        }
+
+        if (isHovered)
+        {
+            isHovered = false;
+            CardTooltip.Instance.Hide();
+        }
     }
     // Start is called before the first frame update
     public void SetBaseCardText(CardDataBase cardData) 

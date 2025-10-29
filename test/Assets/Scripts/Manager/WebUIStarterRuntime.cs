@@ -45,11 +45,11 @@ public class WebUIStarterRuntime : MonoBehaviour
                 {
                     // 405 = Method Not Allowed（GETは禁止だがサーバーは応答している状態）
                     isReady = true;
-                    UnityEngine.Debug.Log("✅ Stable Diffusion 準備完了！");
+                    UnityEngine.Debug.Log("Stable Diffusion 準備完了！");
                 }
                 else
                 {
-                    UnityEngine.Debug.Log("⏳ Stable Diffusion 起動待ち...");
+                    UnityEngine.Debug.Log("Stable Diffusion 起動待ち...");
                 }
             }
 
@@ -131,7 +131,7 @@ public class WebUIStarterRuntime : MonoBehaviour
         webUIProcess.BeginOutputReadLine();
         webUIProcess.BeginErrorReadLine();
 
-        UnityEngine.Debug.Log("▶ Stable Diffusion WebUI をバックグラウンドで起動しました");
+        UnityEngine.Debug.Log("Stable Diffusion WebUI をバックグラウンドで起動しました");
     }
 
     private void StopWebUI()
@@ -139,7 +139,7 @@ public class WebUIStarterRuntime : MonoBehaviour
         if (webUIProcess != null && !webUIProcess.HasExited)
         {
             webUIProcess.Kill();
-            UnityEngine.Debug.Log("🛑 Stable Diffusion を停止しました。");
+            UnityEngine.Debug.Log("Stable Diffusion を停止しました。");
         }
     }
 }
