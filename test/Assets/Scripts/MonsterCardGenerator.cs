@@ -92,25 +92,56 @@ public class MonsterCardGenerator : MonoBehaviour
 
     private async UniTask PlayFusionEffect(Vector3 position)
     {
-        // 🌟 光用の球体を生成
+        // === 1. 光のチャージ球体 ===
         GameObject flash = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         flash.transform.position = position;
         flash.transform.localScale = Vector3.zero;
 
         var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
-        mat.color = new Color(1f, 1f, 0.5f, 0.8f); // 黄色っぽい光
+        mat.color = new Color(1f, 0.8f, 0.3f, 0.8f);
         flash.GetComponent<MeshRenderer>().material = mat;
 
-        // 拡大＆フェードアウト
+        // チャージ → 拡大
         var seq = DOTween.Sequence();
-        seq.Append(flash.transform.DOScale(1.5f, 0.3f).SetEase(Ease.OutQuad));
-        seq.Join(mat.DOFade(0, 0.5f));
+        seq.Append(flash.transform.DOScale(1.5f, 0.4f).SetEase(Ease.OutBack));
+        seq.Join(mat.DOFade(1f, 0.4f));
 
         await seq.AsyncWaitForCompletion();
 
-        Destroy(flash);
+        // === 2. フラッシュ爆発 ===
+        var flashLight = new GameObject("FlashLight");
+        var light = flashLight.AddComponent<Light>();
+        light.type = LightType.Point;
+        light.color = Color.yellow;
+        light.range = 0f;
+        light.intensity = 0f;
+        light.transform.position = position;
 
+        var flashSeq = DOTween.Sequence();
+        flashSeq.Append(DOTween.To(() => light.intensity, x => light.intensity = x, 8f, 0.1f));
+        flashSeq.Join(DOTween.To(() => light.range, x => light.range = x, 5f, 0.1f));
+        flashSeq.AppendInterval(0.1f);
+        flashSeq.Append(DOTween.To(() => light.intensity, x => light.intensity = x, 0f, 0.4f));
+        flashSeq.Join(DOTween.To(() => light.range, x => light.range = x, 0f, 0.4f));
+
+        // === 3. 球体を弾けるようにフェードアウト ===
+        var dissolve = DOTween.Sequence();
+        dissolve.Append(flash.transform.DOScale(3f, 0.5f).SetEase(Ease.OutCubic));
+        dissolve.Join(mat.DOFade(0f, 0.5f));
+
+        await UniTask.WhenAll(
+            flashSeq.AsyncWaitForCompletion().AsUniTask(),
+            dissolve.AsyncWaitForCompletion().AsUniTask()
+        );
+
+        GameObject.Destroy(flash);
+        GameObject.Destroy(flashLight);
+
+        // === 4. 魔法陣展開 ===
         await PlayMagicCircleEffect(position);
+
+        // === 5. パーティクル放出（余韻） ===
+        await PlayFusionParticles(position);
     }
 
     private async UniTask PlayMagicCircleEffect(Vector3 position)
@@ -145,6 +176,68 @@ public class MonsterCardGenerator : MonoBehaviour
         }
 
         Destroy(effect);
+    }
+
+    private async UniTask PlayFusionParticles(Vector3 position)
+    {
+        // === GameObject作成 ===
+        var obj = new GameObject("FusionParticles");
+        obj.transform.position = position;
+        var ps = obj.AddComponent<ParticleSystem>();
+
+        // === パーティクルレンダラー設定 ===
+        var renderer = ps.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Billboard;
+        renderer.sortingOrder = 5;
+
+        // === 粒子用マテリアル ===
+        var mainMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+        mainMat.SetColor("_BaseColor", new Color(1f, 0.8f, 0.2f, 0.8f));
+        mainMat.EnableKeyword("_EMISSION");
+        mainMat.SetColor("_EmissionColor", new Color(1f, 0.6f, 0.1f));
+        renderer.material = mainMat;
+
+        // === トレイル用マテリアル ===
+        var trailMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+        trailMat.SetColor("_BaseColor", new Color(1f, 1f, 0.3f, 0.6f));
+        trailMat.EnableKeyword("_EMISSION");
+        trailMat.SetColor("_EmissionColor", new Color(1f, 0.9f, 0.3f));
+        renderer.trailMaterial = trailMat; // ✅ トレイル専用マテリアル設定
+
+        // === メイン設定 ===
+        var main = ps.main;
+        main.startColor = new ParticleSystem.MinMaxGradient(
+            new Color(1f, 0.9f, 0.3f, 1f),
+            new Color(1f, 0.4f, 0.1f, 0.5f)
+        );
+        main.startSize = 0.25f;
+        main.startLifetime = 1.3f;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.duration = 1f;
+        main.loop = false;
+
+        // === 放出設定 ===
+        var emission = ps.emission;
+        emission.rateOverTime = 0;
+        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 60) });
+
+        // === 形状設定 ===
+        var shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Sphere;
+        shape.radius = 0.4f;
+
+        // === トレイル設定 ===
+        var trails = ps.trails;
+        trails.enabled = true;
+        trails.lifetime = 0.3f;
+        trails.ratio = 0.6f;
+        trails.inheritParticleColor = true; // ✅ 粒子の色を引き継ぐ
+
+        // === 再生 ===
+        ps.Play();
+
+        await UniTask.Delay(2000);
+        GameObject.Destroy(obj);
     }
 
     private MonsterCard CombineCards(List<CardDataBase> cards)

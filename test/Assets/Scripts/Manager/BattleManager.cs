@@ -42,6 +42,12 @@ public class BattleManager : MonoBehaviour
         public bool IsAlive => CurrentHP > 0;
         public MonsterStatus(MonsterCard monster)
         {
+            if (monster == null)
+            {
+                Debug.LogError("MonsterStatus: Monster が null です！");
+                return;
+            }
+
             Monster = monster;
             CurrentHP = monster.HP;
             changes = new List<StatChange>();
@@ -227,6 +233,24 @@ public class BattleManager : MonoBehaviour
 
         var Attacker = attacker.Monster;
 
+        if (attacker == null)
+        {
+            Debug.LogError("❌ attacker が null");
+            return;
+        }
+
+        if (attacker.Monster == null)
+        {
+            Debug.LogError("❌ attacker.Monster が null");
+            return;
+        }
+
+        if (targets == null || targets.Count == 0)
+        {
+            Debug.LogWarning("⚠️ targets が空");
+            return;
+        }
+
         // 1. コマンドをランダム抽選
         Command selectedCommand = null;
         if (Attacker.Skills != null && Attacker.Skills.Count > 0)
@@ -340,8 +364,14 @@ public class BattleManager : MonoBehaviour
         // e.g. if (command.HasStatusEffect) ApplyStatus(target, command.StatusEffect);
     }
 
-    public void SetMonster(ref MonsterCard monsterCard, bool isPlayer) 
+    public void SetMonster(MonsterCard monsterCard, bool isPlayer) 
     {
+        if (monsterCard == null)
+        {
+            Debug.LogError("SetMonster: monsterCard が null です！");
+            return;
+        }
+
         if (isPlayer) 
         {
             playerMonsters.Add(monsterCard);

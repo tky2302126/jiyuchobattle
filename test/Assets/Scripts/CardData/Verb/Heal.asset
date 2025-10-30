@@ -15,4 +15,4 @@ MonoBehaviour:
   category: 3
   cardName: "\u7652\u3059"
   modifyBehavior: 0
-  skillToAdd: {fileID: 0}
+  skillToAdd: {fileID: 11400000, guid: fd9f996ae029ba94aa45fd9761fd4dda, type: 2}

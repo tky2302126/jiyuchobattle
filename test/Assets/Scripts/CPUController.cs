@@ -228,7 +228,7 @@ public class CPUController : MonoBehaviour
         if (presenter != null)
         {
             var monsterCard = presenter.cardData as MonsterCard;
-            BattleManager.Instance.SetMonster(ref monsterCard, isPlayer: false);
+            BattleManager.Instance.SetMonster(monsterCard, isPlayer: false);
         }
         Debug.Log("CPUカードのイラスト生成が完了しました。");
     }

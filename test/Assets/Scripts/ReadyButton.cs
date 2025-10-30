@@ -52,7 +52,7 @@ public class ReadyButton : MonoBehaviour
         if(presenter != null) 
         {
             var monsterCard = presenter.cardData as MonsterCard;
-            BattleManager.Instance.SetMonster(ref monsterCard, isPlayer: true);
+            BattleManager.Instance.SetMonster(monsterCard, isPlayer: true);
         }
 
         await UniTask.WaitUntil(() => CPU.IsReady);
