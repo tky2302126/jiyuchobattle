@@ -96,51 +96,51 @@ public class MonsterCardGenerator : MonoBehaviour
         GameObject flash = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         flash.transform.position = position;
         flash.transform.localScale = Vector3.zero;
-
         var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
         mat.color = new Color(1f, 0.8f, 0.3f, 0.8f);
         flash.GetComponent<MeshRenderer>().material = mat;
 
-        // チャージ → 拡大
         var seq = DOTween.Sequence();
-        seq.Append(flash.transform.DOScale(1.5f, 0.4f).SetEase(Ease.OutBack));
-        seq.Join(mat.DOFade(1f, 0.4f));
-
+        seq.Append(flash.transform.DOScale(2.0f, 0.35f).SetEase(Ease.OutBack));
+        seq.Join(mat.DOFade(1f, 0.35f));
         await seq.AsyncWaitForCompletion();
 
-        // === 2. フラッシュ爆発 ===
-        var flashLight = new GameObject("FlashLight");
-        var light = flashLight.AddComponent<Light>();
-        light.type = LightType.Point;
-        light.color = Color.yellow;
-        light.range = 0f;
-        light.intensity = 0f;
-        light.transform.position = position;
+        // === 2. 強光フラッシュ ===
+        GameObject flashLightObj = new GameObject("FlashLight");
+        flashLightObj.transform.position = position;
+        var pointLight = flashLightObj.AddComponent<Light>();
+        pointLight.type = LightType.Point;
+        pointLight.color = Color.white;
+        pointLight.intensity = 0f;
+        pointLight.range = 0f;
 
-        var flashSeq = DOTween.Sequence();
-        flashSeq.Append(DOTween.To(() => light.intensity, x => light.intensity = x, 8f, 0.1f));
-        flashSeq.Join(DOTween.To(() => light.range, x => light.range = x, 5f, 0.1f));
-        flashSeq.AppendInterval(0.1f);
-        flashSeq.Append(DOTween.To(() => light.intensity, x => light.intensity = x, 0f, 0.4f));
-        flashSeq.Join(DOTween.To(() => light.range, x => light.range = x, 0f, 0.4f));
+        var lightSeq = DOTween.Sequence();
+        lightSeq.Append(DOTween.To(() => pointLight.intensity, x => pointLight.intensity = x, 12f, 0.12f));
+        lightSeq.Join(DOTween.To(() => pointLight.range, x => pointLight.range = x, 6f, 0.12f));
+        lightSeq.AppendInterval(0.05f);
+        lightSeq.Append(DOTween.To(() => pointLight.intensity, x => pointLight.intensity = x, 0f, 0.4f));
+        lightSeq.Join(DOTween.To(() => pointLight.range, x => pointLight.range = x, 0f, 0.4f));
 
-        // === 3. 球体を弾けるようにフェードアウト ===
-        var dissolve = DOTween.Sequence();
-        dissolve.Append(flash.transform.DOScale(3f, 0.5f).SetEase(Ease.OutCubic));
-        dissolve.Join(mat.DOFade(0f, 0.5f));
+        // === 3. 破裂＆破片飛散 ===
+        var explodeSeq = DOTween.Sequence();
+        explodeSeq.Append(flash.transform.DOScale(0f, 0.2f).SetEase(Ease.InCubic));
+        explodeSeq.OnStart(() => {
+            // 球を消す代わりに破片パーティクルを発生
+            PlayShatterParticles(position).Forget();
+        });
 
         await UniTask.WhenAll(
-            flashSeq.AsyncWaitForCompletion().AsUniTask(),
-            dissolve.AsyncWaitForCompletion().AsUniTask()
+            lightSeq.AsyncWaitForCompletion().AsUniTask(),
+            explodeSeq.AsyncWaitForCompletion().AsUniTask()
         );
 
-        GameObject.Destroy(flash);
-        GameObject.Destroy(flashLight);
+        Destroy(flash);
+        Destroy(flashLightObj);
 
         // === 4. 魔法陣展開 ===
         await PlayMagicCircleEffect(position);
 
-        // === 5. パーティクル放出（余韻） ===
+        // === 5. 余韻パーティクル ===
         await PlayFusionParticles(position);
     }
 
@@ -197,12 +197,20 @@ public class MonsterCardGenerator : MonoBehaviour
         mainMat.SetColor("_EmissionColor", new Color(1f, 0.6f, 0.1f));
         renderer.material = mainMat;
 
-        // === トレイル用マテリアル ===
+        // トレイル設定
+        var trails = ps.trails;
+        trails.enabled = true;
+        trails.lifetime = 0.3f;
+        trails.ratio = 0.6f;
+        trails.inheritParticleColor = true;
+
+        // トレイル専用マテリアル設定
         var trailMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
         trailMat.SetColor("_BaseColor", new Color(1f, 1f, 0.3f, 0.6f));
         trailMat.EnableKeyword("_EMISSION");
         trailMat.SetColor("_EmissionColor", new Color(1f, 0.9f, 0.3f));
-        renderer.trailMaterial = trailMat; // ✅ トレイル専用マテリアル設定
+        trailMat.renderQueue = 3001; // メインより少し後ろに描画
+        renderer.trailMaterial = trailMat;
 
         // === メイン設定 ===
         var main = ps.main;
@@ -226,18 +234,91 @@ public class MonsterCardGenerator : MonoBehaviour
         shape.shapeType = ParticleSystemShapeType.Sphere;
         shape.radius = 0.4f;
 
-        // === トレイル設定 ===
-        var trails = ps.trails;
-        trails.enabled = true;
-        trails.lifetime = 0.3f;
-        trails.ratio = 0.6f;
-        trails.inheritParticleColor = true; // ✅ 粒子の色を引き継ぐ
-
         // === 再生 ===
         ps.Play();
 
         await UniTask.Delay(2000);
         GameObject.Destroy(obj);
+    }
+
+    private async UniTask PlayShatterParticles(Vector3 position)
+    {
+        // === 1. パーティクル用 GameObject ===
+        var obj = new GameObject("ShatterParticles");
+        obj.transform.position = position;
+
+        var ps = obj.AddComponent<ParticleSystem>();
+        var renderer = ps.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Billboard;
+        renderer.sortingOrder = 10;
+
+        // === 2. メインパーティクル用マテリアル ===
+        var mat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+        mat.SetColor("_BaseColor", new Color(1f, 0.9f, 0.4f, 0.9f));
+        mat.EnableKeyword("_EMISSION");
+        mat.SetColor("_EmissionColor", new Color(1f, 0.7f, 0.2f));
+        renderer.material = mat;
+
+        // === 3. メインパーティクル設定 ===
+        var main = ps.main;
+        main.startLifetime = 1.0f;
+        main.startSpeed = 5f;
+        main.startSize = 0.1f;
+        main.startColor = new ParticleSystem.MinMaxGradient(
+            new Color(1f, 0.9f, 0.4f),
+            new Color(1f, 0.6f, 0.2f)
+        );
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.duration = 1f;
+        main.loop = false;
+
+        // === 4. 放出設定 ===
+        var emission = ps.emission;
+        emission.rateOverTime = 0;
+        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 100) });
+
+        // === 5. 形状設定 ===
+        var shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Sphere;
+        shape.radius = 0.3f;
+
+        // === 6. トレイル設定 ===
+        var trails = ps.trails;
+        trails.enabled = true;
+        trails.lifetime = 0.5f;
+        trails.ratio = 0.8f;
+        trails.inheritParticleColor = true;
+
+        // === 7. トレイル用マテリアルを独立して作成・設定 ===
+        var trailMat = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+        trailMat.SetColor("_BaseColor", new Color(1f, 0.9f, 0.4f, 0.8f));
+        trailMat.EnableKeyword("_EMISSION");
+        trailMat.SetColor("_EmissionColor", new Color(1f, 0.7f, 0.2f));
+        trailMat.renderQueue = 3001; // メインより後ろに描画
+        renderer.trailMaterial = trailMat;
+
+        // === 8. 色変化（フェードアウト） ===
+        var colorOver = ps.colorOverLifetime;
+        colorOver.enabled = true;
+        Gradient grad = new Gradient();
+        grad.SetKeys(
+            new GradientColorKey[] {
+            new GradientColorKey(new Color(1f, 0.9f, 0.4f), 0f),
+            new GradientColorKey(new Color(1f, 0.6f, 0.2f), 1f)
+            },
+            new GradientAlphaKey[] {
+            new GradientAlphaKey(1f, 0f),
+            new GradientAlphaKey(0f, 1f)
+            }
+        );
+        colorOver.color = new ParticleSystem.MinMaxGradient(grad);
+
+        // === 9. 再生 ===
+        ps.Play();
+
+        // === 10. 終了後破棄 ===
+        await UniTask.Delay(1500);
+        Destroy(obj);
     }
 
     private MonsterCard CombineCards(List<CardDataBase> cards)
@@ -318,8 +399,8 @@ public class MonsterCardGenerator : MonoBehaviour
         bool isPlayer)
     {
         Vector3 startOffset = isPlayer ? new Vector3(0, 0, -2f) : new Vector3(0, 0, 2f);
-        Quaternion startRot = isPlayer ? Quaternion.Euler(0, 180, 0) : Quaternion.Euler(0, 180, 180);
-        Quaternion endRot = isPlayer ? Quaternion.Euler(0, 0, 0) : Quaternion.Euler(0, 0, 180);
+        Quaternion startRot = isPlayer ? Quaternion.Euler(0, 180, 0) : Quaternion.Euler(0, 180, 0);
+        Quaternion endRot = isPlayer ? Quaternion.Euler(0, 0, 0) : Quaternion.Euler(0, 0, 0);
 
         GameObject newCard = Instantiate(cardPrefab, spawnPoint.position + startOffset, startRot);
 

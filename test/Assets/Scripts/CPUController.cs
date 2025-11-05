@@ -223,7 +223,11 @@ public class CPUController : MonoBehaviour
             isPlayer: false
             );
 
-        if(monsterCardObj != null) cpuCardsInFieldSlot.Add(monsterCardObj);
+        if (monsterCardObj != null) 
+        {
+            BattleManager.Instance.SetMonster(monsterCardObj, isPlayer: false);
+            cpuCardsInFieldSlot.Add(monsterCardObj); 
+        }
         var presenter = monsterCardObj.GetComponent<CardPresenter>();
         if (presenter != null)
         {

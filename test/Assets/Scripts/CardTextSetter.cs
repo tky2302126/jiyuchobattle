@@ -9,6 +9,7 @@ public class CardTextSetter : MonoBehaviour
 {
     [SerializeField] TextMeshPro title;
     [SerializeField] TextMeshPro description;
+    [SerializeField] TextMeshPro hp;
     private Camera mainCamera;
 
     private bool isHovered = false;
@@ -112,9 +113,10 @@ public class CardTextSetter : MonoBehaviour
 
         title.text = monsterCard.CardName;
 
+        hp.text = $"{ monsterCard.HP}";
+
         // HP/攻撃力/防御力/回避率を表示
-        description.text = $"HP: {monsterCard.HP}\n" +
-                           $"攻撃力: {monsterCard.Attack}\n" +
+        description.text = $"攻撃力: {monsterCard.Attack}\n" +
                            $"防御力: {monsterCard.Defense}\n" +
                            $"回避: {monsterCard.Evasion * 100f:F1}%\n";
 

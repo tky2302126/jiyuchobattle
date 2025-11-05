@@ -37,9 +37,9 @@ public class ReadyButton : MonoBehaviour
 
     }
 
-    public async Task OnClickTask() 
+    public async Task OnClickTask()
     {
-        
+
         CPU.SetCardAndGenerateCardAsync().Forget(); // 仮置き
         var monsterCardObj = await cardGenerator.CreateMonsterCardAsync(
             dragmanager.CardsInFieldSlot,
@@ -47,7 +47,11 @@ public class ReadyButton : MonoBehaviour
             isPlayer: true
             );
 
-        if(monsterCardObj != null) dragmanager.CardsInFieldSlot.Add(monsterCardObj);
+        if (monsterCardObj != null) 
+        {
+            dragmanager.CardsInFieldSlot.Add(monsterCardObj);
+            BattleManager.Instance.SetMonster(monsterCardObj, isPlayer: true);
+        } 
         var presenter = monsterCardObj.GetComponent<CardPresenter>();
         if(presenter != null) 
         {

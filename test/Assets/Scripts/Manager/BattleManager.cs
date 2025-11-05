@@ -27,6 +27,9 @@ public class BattleManager : MonoBehaviour
     private List<MonsterCard> playerMonsters = new();
     private List<MonsterCard> cpuMonsters = new();
 
+    private List<GameObject> playerMonsterCards = new();
+    private List<GameObject> cpuMonsterCards = new();
+
     private BattleState currentState = BattleState.Initialize;
     public  BattleState CurrentState => currentState;
     private bool isBattleRunning = false;
@@ -38,6 +41,8 @@ public class BattleManager : MonoBehaviour
         public int CurrentHP;
         public List<StatChange> changes;
         public MonsterCondition Condition;
+        private int maxHp;
+        public HPBarController HPBar { get; private set; }
 
         public bool IsAlive => CurrentHP > 0;
         public MonsterStatus(MonsterCard monster)
@@ -50,8 +55,25 @@ public class BattleManager : MonoBehaviour
 
             Monster = monster;
             CurrentHP = monster.HP;
+            maxHp = monster.HP;
             changes = new List<StatChange>();
 
+        }
+        public MonsterStatus(MonsterCard monster, HPBarController hpBar)
+        {
+            if (monster == null)
+            {
+                Debug.LogError("MonsterStatus: Monster が null です！");
+                return;
+            }
+
+            Monster = monster;
+            CurrentHP = monster.HP;
+            maxHp = monster.HP;
+            changes = new List<StatChange>();
+            HPBar = hpBar;
+
+            HPBar?.SetHP(CurrentHP, maxHp);
         }
     }
 
@@ -108,10 +130,26 @@ public class BattleManager : MonoBehaviour
 
         // MonsterCard → MonsterStatus に変換
         playerStatuses.Clear();
-        foreach (var m in playerMonsters) playerStatuses.Add(new MonsterStatus(m));
+        foreach(var card in playerMonsterCards) 
+        {
+            var cardPresenter = card.GetComponent<CardPresenter>();
+            var monsterCard = cardPresenter.cardData as MonsterCard;
+            var HpBar = card.GetComponentInChildren<HPBarController>();
+            playerStatuses.Add(new MonsterStatus(monsterCard,HpBar));
+        }
+
+        // foreach (var m in playerMonsters) playerStatuses.Add(new MonsterStatus(m));
 
         cpuStatuses.Clear();
-        foreach (var m in cpuMonsters) cpuStatuses.Add(new MonsterStatus(m));
+        foreach (var card in cpuMonsterCards)
+        {
+            var cardPresenter = card.GetComponent<CardPresenter>();
+            var monsterCard = cardPresenter.cardData as MonsterCard;
+            var HpBar = card.GetComponentInChildren<HPBarController>();
+            cpuStatuses.Add(new MonsterStatus(monsterCard, HpBar));
+        }
+
+        // foreach (var m in cpuMonsters) cpuStatuses.Add(new MonsterStatus(m));
 
         Debug.Log("⚔️ バトル開始！");
         currentState = BattleState.InBattle;
@@ -349,6 +387,8 @@ public class BattleManager : MonoBehaviour
 
         Debug.Log($"💥 {target.Monster.CardName} は {damage} ダメージを受けた！（残りHP: {target.CurrentHP}）");
 
+        target?.HPBar?.SetHP(target.CurrentHP, target.Monster.HP);
+
         if (target.CurrentHP == 0)
         {
             Debug.Log($"💀 {target.Monster.CardName} は倒れた！");
@@ -379,6 +419,24 @@ public class BattleManager : MonoBehaviour
         else 
         {
             cpuMonsters.Add(monsterCard);
+        }
+    }
+
+    public void SetMonster(GameObject monsterCardObj, bool isPlayer)
+    {
+        if (monsterCardObj == null)
+        {
+            Debug.LogError("SetMonster: monsterCardObj が null です！");
+            return;
+        }
+
+        if (isPlayer)
+        {
+            playerMonsterCards.Add(monsterCardObj);
+        }
+        else
+        {
+            cpuMonsterCards.Add(monsterCardObj);
         }
     }
 }
