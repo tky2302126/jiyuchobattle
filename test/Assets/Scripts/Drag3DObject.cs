@@ -119,6 +119,10 @@ public class Drag3DObject : MonoBehaviour
 
     private void UpdateCardPositions()
     {
+        // まずリストから削除済みカードを除去
+        cardsInFieldSlot.RemoveAll(c => c == null);
+        cardsInHandSlot.RemoveAll(c => c == null);
+
         // フィールドスロット整列
         if (cardsInFieldSlot.Count > 0)
         {

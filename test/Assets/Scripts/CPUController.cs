@@ -5,7 +5,7 @@ using DG.Tweening;
 using System.Linq;
 using Unity.VisualScripting;
 
-public class CPUController : MonoBehaviour
+public class CPUController : MonoBehaviour, IBattleParticipant
 {
     [Header("References")]
     [SerializeField] private ReadyButton readyButton; // 既存の生成処理を利用
@@ -97,8 +97,7 @@ public class CPUController : MonoBehaviour
 
 
 
-            cpuCardsInHandSlot.Add(cardObj);
-            UpdateCardPositions();
+            AddCardToHand(cardObj);
 
             await UniTask.Delay(200); // 配布間隔を少し空ける
         }
@@ -106,6 +105,10 @@ public class CPUController : MonoBehaviour
 
     private void UpdateCardPositions()
     {
+        // まずリスト内の破棄済みカードを除外
+        cpuCardsInFieldSlot.RemoveAll(c => c == null);
+        cpuCardsInHandSlot.RemoveAll(c => c == null);
+
         // フィールドスロット整列
         if (cpuCardsInFieldSlot.Count > 0)
         {
@@ -235,5 +238,11 @@ public class CPUController : MonoBehaviour
             BattleManager.Instance.SetMonster(monsterCard, isPlayer: false);
         }
         Debug.Log("CPUカードのイラスト生成が完了しました。");
+    }
+
+    public void AddCardToHand(GameObject cardObj)
+    {
+        cpuCardsInHandSlot.Add(cardObj);
+        UpdateCardPositions();
     }
 }

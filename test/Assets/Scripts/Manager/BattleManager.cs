@@ -23,6 +23,8 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private CardManager playerController;
     [SerializeField] private CPUController cpuController;
     [SerializeField] private float tickInterval = 0.1f; // 戦闘の更新間隔
+    [SerializeField] private GameObject cardPrefab;
+    [SerializeField] private Transform spawnPoint;
 
     private List<MonsterCard> playerMonsters = new();
     private List<MonsterCard> cpuMonsters = new();
@@ -239,16 +241,93 @@ public class BattleManager : MonoBehaviour
         bool playerAllDead = playerMonsters.TrueForAll(m => m.HP <= 0);
         bool cpuAllDead = cpuMonsters.TrueForAll(m => m.HP <= 0);
 
-        if (playerAllDead && cpuAllDead)
+        if (playerAllDead && cpuAllDead) 
+        {
             Debug.Log("🤝 引き分け！");
-        else if (playerAllDead)
-            Debug.Log("💀 プレイヤーの敗北！");
-        else
-            Debug.Log("🏆 プレイヤーの勝利！");
+            // 両方にカードをランダムに一枚配布
+        }
 
+        bool playerWin = cpuAllDead && !playerAllDead;
+        bool cpuWin = playerAllDead && !cpuAllDead;
+
+        // --- 1. 敗北側のカードを分裂 ---
+        var defeatedCards = cpuWin ? playerMonsterCards : cpuMonsterCards;
+        IBattleParticipant winnerController = playerWin ? playerController : cpuController;
+        IBattleParticipant loserController = playerWin ? cpuController : playerController;
+
+        List<CardDataBase> splitCards = new();
+
+        foreach (var cardObj in defeatedCards)
+        {
+            var presenter = cardObj.GetComponent<CardPresenter>();
+            if (presenter == null) continue;
+
+            var monster = presenter.cardData as MonsterCard;
+            if (monster == null) continue;
+
+            if (monster.sourceCards != null)
+            {
+                foreach (var source in monster.sourceCards)
+                {
+                    if (source != null)
+                    {
+                        splitCards.Add(source);
+                        Debug.Log($"{monster.CardName} が分裂 → {source.CardName}");
+                    }
+                }
+            }
+        }
+
+        if (splitCards.Count == 0)
+        {
+            Debug.Log("分裂カードが存在しません。");
+            return;
+        }
+
+        await UniTask.Delay(1000);
+
+        // --- 2. 勝利側が1枚選択 ---
+        CardDataBase selectedByWinner = null;
+        if (playerWin)
+        {
+            // TODO: UIで選択可能にする（暫定：ランダム）
+            selectedByWinner = splitCards[Random.Range(0, splitCards.Count)];
+            Debug.Log($"🏆 プレイヤーが {selectedByWinner.CardName} を獲得！");
+        }
+        else
+        {
+            selectedByWinner = splitCards[Random.Range(0, splitCards.Count)];
+            Debug.Log($"🏆 CPUが {selectedByWinner.CardName} を獲得！");
+        }
+
+        // --- 3. 敗北側がランダムに1枚獲得 ---
+        CardDataBase selectedByLoser = splitCards[Random.Range(0, splitCards.Count)];
+        Debug.Log($"🎁 敗北側が {selectedByLoser.CardName} を手札に加えた");
+
+        // --- 4. 手札に追加 ---
+        var winnerCardObj = CreateCard(selectedByWinner);
+        var loserCardObj = CreateCard(selectedByLoser);
+
+        winnerController.AddCardToHand(winnerCardObj);
+        loserController.AddCardToHand(loserCardObj);
+
+        // --- 5. モンスターカードを破棄
+        foreach (var card in playerMonsterCards) 
+        {
+            Destroy(card);
+        }
+
+        foreach (var card in cpuMonsterCards)
+        {
+            Destroy(card);
+        }
+
+        // --- 6. 次のラウンドへ ---
+        Debug.Log("🔁 次のラウンド準備中...");
         await UniTask.Delay(2000);
 
-        // 次ラウンドを再開するなどの処理
+        // 初期化とは別のイニシャライズを作る
+
         // await InitializeAsync();
     }
 
@@ -260,6 +339,15 @@ public class BattleManager : MonoBehaviour
         var alive = list.FindAll(m => m.CurrentHP > 0);
         if (alive.Count == 0) return null;
         return alive[Random.Range(0, alive.Count)];
+    }
+
+    private GameObject CreateCard(CardDataBase cardData) 
+    {
+        GameObject cardObj = Instantiate(cardPrefab, spawnPoint.position, Quaternion.identity);
+        CardPresenter presenter = cardObj.AddComponent<CardPresenter>();
+        presenter.cardData = cardData;
+
+        return cardObj;
     }
 
     /// <summary>

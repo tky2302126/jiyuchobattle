@@ -52,7 +52,7 @@ public class MonsterCardGenerator : MonoBehaviour
         await MoveAndFlipCards(sourceCards, spawnPoint);
 
         // --- 光エフェクト ---
-        await PlayFusionEffect(spawnPoint.position);
+         var fusionTask =  PlayFusionEffect(spawnPoint.position);
 
         // --- モンスターカードクラス生成---
         var monsterCard = CombineCards(fieldCards);
@@ -67,9 +67,11 @@ public class MonsterCardGenerator : MonoBehaviour
         DestroyCards(sourceCards);
 
         // --- 新しいカードを生成 ---
-        GameObject newCard = await SpawnCard(monsterCard, fieldCards, spawnPoint, isPlayer);
+        var card = await SpawnCard(monsterCard, fieldCards, spawnPoint, isPlayer);
 
-        return newCard;
+        await fusionTask;
+
+        return card;
     }
 
     private async UniTask MoveAndFlipCards(List<GameObject> cards, Transform spawnPoint)

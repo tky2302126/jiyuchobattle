@@ -4,7 +4,7 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using System.Threading.Tasks;
 
-public class CardManager : MonoBehaviour
+public class CardManager : MonoBehaviour, IBattleParticipant
 {
     [Header("対象プレハブ")]
     public GameObject targetPrefab;
@@ -67,6 +67,11 @@ public class CardManager : MonoBehaviour
         cardObj.transform.position = endPos;
         cardObj.transform.rotation = endRot;
 
+        AddCardToHand(cardObj);
+    }
+
+    public void AddCardToHand(GameObject cardObj) 
+    {
         // 手札に正式登録
         dragManager.AddCardToHand(cardObj);
     }
