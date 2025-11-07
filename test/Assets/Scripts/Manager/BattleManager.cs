@@ -36,8 +36,11 @@ public class BattleManager : MonoBehaviour
     public  BattleState CurrentState => currentState;
     private bool isBattleRunning = false;
 
+    private readonly Dictionary<GameObject, bool> isAnimating = new();
+
     private class MonsterStatus
     {
+        public GameObject owner { get; private set; }
         public MonsterCard Monster;
         public float ElapsedTime = 0f;
         public int CurrentHP;
@@ -61,7 +64,7 @@ public class BattleManager : MonoBehaviour
             changes = new List<StatChange>();
 
         }
-        public MonsterStatus(MonsterCard monster, HPBarController hpBar)
+        public MonsterStatus(MonsterCard monster, HPBarController hpBar, GameObject owner)
         {
             if (monster == null)
             {
@@ -74,7 +77,7 @@ public class BattleManager : MonoBehaviour
             maxHp = monster.HP;
             changes = new List<StatChange>();
             HPBar = hpBar;
-
+            this.owner = owner; 
             HPBar?.SetHP(CurrentHP, maxHp);
         }
     }
@@ -137,7 +140,7 @@ public class BattleManager : MonoBehaviour
             var cardPresenter = card.GetComponent<CardPresenter>();
             var monsterCard = cardPresenter.cardData as MonsterCard;
             var HpBar = card.GetComponentInChildren<HPBarController>();
-            playerStatuses.Add(new MonsterStatus(monsterCard,HpBar));
+            playerStatuses.Add(new MonsterStatus(monsterCard,HpBar, card));
         }
 
         // foreach (var m in playerMonsters) playerStatuses.Add(new MonsterStatus(m));
@@ -148,7 +151,7 @@ public class BattleManager : MonoBehaviour
             var cardPresenter = card.GetComponent<CardPresenter>();
             var monsterCard = cardPresenter.cardData as MonsterCard;
             var HpBar = card.GetComponentInChildren<HPBarController>();
-            cpuStatuses.Add(new MonsterStatus(monsterCard, HpBar));
+            cpuStatuses.Add(new MonsterStatus(monsterCard, HpBar, card));
         }
 
         // foreach (var m in cpuMonsters) cpuStatuses.Add(new MonsterStatus(m));
@@ -185,7 +188,7 @@ public class BattleManager : MonoBehaviour
                 {
                     // var target = GetRandomAlive(cpuStatuses);
                     // if (target != null)
-                        PerformAttack(status, cpuStatuses);
+                        PerformAttack(status, cpuStatuses, isPlayer: true);
 
                     status.ElapsedTime = 0f; // 攻撃後にリセット
 
@@ -203,7 +206,7 @@ public class BattleManager : MonoBehaviour
                 {
                    // var target = GetRandomAlive(playerStatuses);
                    // if (target != null)
-                        PerformAttack(status, playerStatuses);
+                        PerformAttack(status, playerStatuses, isPlayer: false);
 
                     status.ElapsedTime = 0f;
                 }
@@ -353,7 +356,7 @@ public class BattleManager : MonoBehaviour
     /// <summary>
     /// 攻撃処理（即時実行）
     /// </summary>
-    private void PerformAttack(MonsterStatus attacker, List<MonsterStatus> targets)
+    private void PerformAttack(MonsterStatus attacker, List<MonsterStatus> targets, bool isPlayer)
     {
         if (attacker == null || targets == null || targets.Count == 0) return;
 
@@ -417,6 +420,17 @@ public class BattleManager : MonoBehaviour
             }
         }
 
+        // 3. 最初のターゲットを突進目標に
+        var firstTarget = chosenTargets[0];
+        var targetObj = firstTarget.owner;
+        if (targetObj == null)
+        {
+            Debug.LogWarning("⚠️ targetObj が見つかりません");
+            return;
+        }
+
+        // --- 🌀 突進アニメーション ---
+        AnimateAttackAsync(attacker.owner, isPlayer).Forget();
         // 3. コマンドを対象に実行
         foreach (var target in chosenTargets)
         {
@@ -439,6 +453,55 @@ public class BattleManager : MonoBehaviour
                 Debug.Log($"💀 {target.Monster.CardName} は倒れた！");
             }
         }
+    }
+
+    private async UniTask AnimateAttackAsync(GameObject attackerObj, bool isPlayer)
+    {
+        if (attackerObj == null) return;
+
+        // アニメーション中なら待機（同時再生防止）
+        if (isAnimating.TryGetValue(attackerObj, out bool animating) && animating)
+        {
+            await UniTask.WaitUntil(() => !isAnimating[attackerObj]);
+        }
+
+        isAnimating[attackerObj] = true;
+
+        Vector3 startPos = attackerObj.transform.position;
+
+        // Y方向の移動量（プレイヤーは上、敵は下）
+        float moveAmount = 0.5f;
+        float direction = isPlayer ? 1f : -1f;
+        Vector3 attackPos = startPos + Vector3.up * moveAmount * direction;
+
+        float duration = 0.1f;
+        float elapsed = 0f;
+
+        // --- 前進 ---
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            attackerObj.transform.position = Vector3.Lerp(startPos, attackPos, t);
+            await UniTask.Yield();
+        }
+
+        // ヒット演出などの待機時間
+        await UniTask.Delay(150);
+
+        // --- 後退（元の位置に戻る） ---
+        elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            attackerObj.transform.position = Vector3.Lerp(attackPos, startPos, t);
+            await UniTask.Yield();
+        }
+
+        attackerObj.transform.position = startPos;
+
+        isAnimating[attackerObj] = false;
     }
 
     /// <summary>
