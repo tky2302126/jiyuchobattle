@@ -3,6 +3,7 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using CardEase;
 using Unity.VisualScripting;
+using System.Threading.Tasks;
 
 /// <summary>
 /// ゲーム全体の進行を制御するメインループマネージャー
@@ -37,6 +38,10 @@ public class BattleManager : MonoBehaviour
     private bool isBattleRunning = false;
 
     private readonly Dictionary<GameObject, bool> isAnimating = new();
+
+    private BattleRecord record = new();
+    public BattleRecord Record => record;
+    private int currentRound = 1;
 
     private class MonsterStatus
     {
@@ -137,6 +142,8 @@ public class BattleManager : MonoBehaviour
         playerStatuses.Clear();
         foreach(var card in playerMonsterCards) 
         {
+            if (card == null) continue;
+
             var cardPresenter = card.GetComponent<CardPresenter>();
             var monsterCard = cardPresenter.cardData as MonsterCard;
             var HpBar = card.GetComponentInChildren<HPBarController>();
@@ -148,6 +155,8 @@ public class BattleManager : MonoBehaviour
         cpuStatuses.Clear();
         foreach (var card in cpuMonsterCards)
         {
+            if (card == null) continue;
+
             var cardPresenter = card.GetComponent<CardPresenter>();
             var monsterCard = cardPresenter.cardData as MonsterCard;
             var HpBar = card.GetComponentInChildren<HPBarController>();
@@ -248,6 +257,7 @@ public class BattleManager : MonoBehaviour
         {
             Debug.Log("🤝 引き分け！");
             // 両方にカードをランダムに一枚配布
+            record.draws++;
         }
 
         bool playerWin = cpuAllDead && !playerAllDead;
@@ -262,6 +272,7 @@ public class BattleManager : MonoBehaviour
 
         foreach (var cardObj in defeatedCards)
         {
+            if (cardObj == null) continue; // ← 追加
             var presenter = cardObj.GetComponent<CardPresenter>();
             if (presenter == null) continue;
 
@@ -295,12 +306,14 @@ public class BattleManager : MonoBehaviour
         {
             // TODO: UIで選択可能にする（暫定：ランダム）
             selectedByWinner = splitCards[Random.Range(0, splitCards.Count)];
-            Debug.Log($"🏆 プレイヤーが {selectedByWinner.CardName} を獲得！");
+            Debug.Log($"プレイヤーが {selectedByWinner.CardName} を獲得！");
+            record.playerWins++;
         }
         else
         {
             selectedByWinner = splitCards[Random.Range(0, splitCards.Count)];
-            Debug.Log($"🏆 CPUが {selectedByWinner.CardName} を獲得！");
+            Debug.Log($"CPUが {selectedByWinner.CardName} を獲得！");
+            record.cpuWins++;
         }
 
         // --- 3. 敗北側がランダムに1枚獲得 ---
@@ -317,21 +330,29 @@ public class BattleManager : MonoBehaviour
         // --- 5. モンスターカードを破棄
         foreach (var card in playerMonsterCards) 
         {
-            Destroy(card);
+            if (card != null) Destroy(card);
         }
 
         foreach (var card in cpuMonsterCards)
         {
-            Destroy(card);
+            if (card != null) Destroy(card);
         }
 
         // --- 6. 次のラウンドへ ---
-        Debug.Log("🔁 次のラウンド準備中...");
+        currentRound++;
+        Debug.Log("次のラウンド準備中...");
         await UniTask.Delay(2000);
+        await DealCardAsync();
 
-        // 初期化とは別のイニシャライズを作る
+        currentState = BattleState.WaitingForReady;
+        Debug.Log("配布完了。各陣営のモンスター生成を待機中...");
+    }
 
-        // await InitializeAsync();
+    private async Task DealCardAsync()
+    {
+        await playerController.DealCardAsync();
+        await cpuController.DealCardAsync();
+
     }
 
     /// <summary>
@@ -589,6 +610,27 @@ public class BattleManager : MonoBehaviour
         {
             cpuMonsterCards.Add(monsterCardObj);
         }
+    }
+
+    private bool CheckGameOver()
+    {
+        // 3ラウンド以上経過
+        if (currentRound >= 4) return true;
+        return false;
+    }
+}
+
+public class BattleRecord 
+{
+    public int playerWins = 0;
+    public int cpuWins = 0;
+    public int draws = 0;
+
+    public void Reset()
+    {
+        playerWins = 0;
+        cpuWins = 0;
+        draws = 0;
     }
 }
 

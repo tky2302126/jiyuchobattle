@@ -13,6 +13,38 @@ public class MonsterCardGenerator : MonoBehaviour
 
     private TextToImage _t2I = new TextToImage();
 
+    public bool IsPlayerCreateMonster(List<GameObject> sourceCards) 
+    {
+        // --- 生成可能か判定する処理 ---
+        bool hasNounCard = sourceCards.Exists(c =>
+        {
+            var data = c.GetComponent<CardPresenter>()?.cardData;
+            return data is NounData;
+        });
+
+        List<CardDataBase> fieldCards = new List<CardDataBase>();
+        foreach (var cardObj in sourceCards)
+        {
+            var data = cardObj.GetComponent<CardPresenter>()?.cardData;
+            if (data != null)
+                fieldCards.Add(data);
+        }
+
+        if (fieldCards.Count == 0)
+        {
+            Debug.LogWarning("フィールドにカードがありません。");
+            return false;
+        }
+
+        if (!hasNounCard)
+        {
+            Debug.LogWarning("名詞カードが含まれていません。生成できません。");
+            return false;
+        }
+
+        return true;
+    }
+
     /// <summary>
     /// 共通のカード生成演出
     /// </summary>

@@ -245,4 +245,47 @@ public class CPUController : MonoBehaviour, IBattleParticipant
         cpuCardsInHandSlot.Add(cardObj);
         UpdateCardPositions();
     }
+
+    public async UniTask DealCardAsync() 
+    {
+        var cardDataList = cardManager.cardDataList;
+        if (cardDataList == null || cardDataList.Count == 0)
+        {
+            Debug.LogWarning("カードデータリストが空です。");
+            return;
+        }
+
+        // --- 手札の枚数を確認 ---
+        int cardsToDeal = Mathf.Max(0, 6 - cpuCardsInHandSlot.Count);
+        if (cardsToDeal <= 0)
+        {
+            Debug.Log("CPUの手札はすでに6枚あります。配布をスキップします。");
+            await UniTask.Delay(1);
+            return;
+        }
+
+        // --- 名詞カードを持っているか確認 ---
+        bool hasNoun = cpuCardsInHandSlot.Any(c => c.GetComponent<CardPresenter>()?.cardData is NounData);
+
+        // --- 名詞カードがない場合、必ず1枚配る ---
+        if (!hasNoun)
+        {
+            List<CardDataBase> nounCards = cardDataList.FindAll(c => c is NounData);
+            if (nounCards.Count > 0)
+            {
+                await SpawnCardsFromList(nounCards, 1);
+                cardsToDeal--;
+                Debug.Log("CPUに名詞カードを強制的に配布しました。");
+            }
+            else
+            {
+                Debug.LogWarning("CPU用の名詞カードがデッキに存在しません。");
+            }
+        }
+
+        await SpawnCardsFromList(cardDataList, cardsToDeal);
+
+        //Debug.Log($"🤖 CPUのカード配布完了: {cpuCardsInHandSlot.Count}枚 (名詞あり: " +
+        //    $"{cpuCardsInHandSlot.Any(c => c.GetComponent<CardPresenter>()?.cardData is NounData)})");
+    }
 }

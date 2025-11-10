@@ -149,6 +149,28 @@ public class CardManager : MonoBehaviour, IBattleParticipant
             await UniTask.Delay(300);
         }
     }
+    // 2ラウンド目以降にカードを配る
+    public async UniTask DealCardAsync() 
+    {
+        int cardsToDeal = Mathf.Max(0, 6 - dragManager.GetHandCount());
+
+        if(cardsToDeal <= 0) 
+        {
+            await UniTask.Delay(1);
+            return;
+        }
+
+
+        var hasNoun = dragManager.HasNounCardInHand();
+        if (!hasNoun) 
+        {
+            List<CardDataBase> nounCards = cardDataList.FindAll(c => c is NounData);
+            await SpawnCardsFromList(nounCards, 1);
+            cardsToDeal--;
+        }
+
+        await SpawnCardsFromList(cardDataList, cardsToDeal);
+    }
 }
 
 // プレハブにアタッチする MonoBehaviour

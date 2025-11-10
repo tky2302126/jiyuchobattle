@@ -222,5 +222,33 @@ public class Drag3DObject : MonoBehaviour
         UpdateCardPositions();
     }
 
+    /// 手札に名詞カードを1枚以上持っているかどうかを返す
+    public bool HasNounCardInHand()
+    {
+        return cardsInHandSlot.Exists(card =>
+        {
+            var presenter = card.GetComponent<CardPresenter>();
+            if (presenter == null) return false;
+            return presenter.cardData is NounData;
+        });
+    }
 
+    
+    /// 手札に指定した型のカードが含まれているかチェック
+    public bool HasCardInHandOfType<T>() where T : CardDataBase
+    {
+        return cardsInHandSlot.Exists(card =>
+        {
+            var presenter = card.GetComponent<CardPresenter>();
+            if (presenter == null) return false;
+            return presenter.cardData is T;
+        });
+    }
+
+    public int GetHandCount() 
+    {
+        // null や破棄済みカードを除外してカウント
+        cardsInHandSlot.RemoveAll(c => c == null);
+        return cardsInHandSlot.Count;
+    }
 }

@@ -39,6 +39,10 @@ public class ReadyButton : MonoBehaviour
 
     public async Task OnClickTask()
     {
+        // 生成待機中以外は反応しない
+        if (BattleManager.Instance.CurrentState != BattleManager.BattleState.WaitingForReady) return;
+        var playerCanCreate = cardGenerator.IsPlayerCreateMonster(dragmanager.CardsInFieldSlot);
+        if (!playerCanCreate) return;
 
         CPU.SetCardAndGenerateCardAsync().Forget(); // 仮置き
         var monsterCardObj = await cardGenerator.CreateMonsterCardAsync(
