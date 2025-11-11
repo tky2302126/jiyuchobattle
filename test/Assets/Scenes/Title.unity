@@ -2309,6 +2309,7 @@ MonoBehaviour:
   targetText: {fileID: 1340696119}
   hoverColor: {r: 1, g: 0.22428435, b: 0.015686274, a: 1}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
+  sceneTag: 1
 --- !u!1 &1347651218
 GameObject:
   m_ObjectHideFlags: 0
@@ -2648,6 +2649,21 @@ PrefabInstance:
       propertyPath: m_Name
       value: Table Set 1 Grey Wood Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 7827057492031912493, guid: 827062553953ace449df65073bc88caa,
+        type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7827057492031912493, guid: 827062553953ace449df65073bc88caa,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: a6861ae2eb93bac458a7c0cf4a47ce87, type: 2}
+    - target: {fileID: 7827057492031912493, guid: 827062553953ace449df65073bc88caa,
+        type: 3}
+      propertyPath: m_Materials.Array.data[1]
+      value: 
+      objectReference: {fileID: 2100000, guid: cbceb7282b9cb5242bb43a8109438e44, type: 2}
     - target: {fileID: 9025948049729954972, guid: 827062553953ace449df65073bc88caa,
         type: 3}
       propertyPath: m_LocalScale.x
