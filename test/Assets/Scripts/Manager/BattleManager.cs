@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
-using CardEase;
-using Unity.VisualScripting;
 using System.Threading.Tasks;
+using System.Linq;
 
 /// <summary>
 /// ゲーム全体の進行を制御するメインループマネージャー
@@ -172,6 +171,12 @@ public class BattleManager : MonoBehaviour
         await BattleLoopAsync();
     }
 
+    private void SendResult()
+    {
+        var resultManager = FindAnyObjectByType<BattleResultManager>();
+        resultManager.SetRecord(Record);
+    }
+
     /// <summary>
     /// 戦闘メインループ
     /// </summary>
@@ -253,99 +258,120 @@ public class BattleManager : MonoBehaviour
         bool playerAllDead = playerMonsters.TrueForAll(m => m.HP <= 0);
         bool cpuAllDead = cpuMonsters.TrueForAll(m => m.HP <= 0);
 
+        BattleResultType resultType;
+
         if (playerAllDead && cpuAllDead) 
         {
             Debug.Log("🤝 引き分け！");
             // 両方にカードをランダムに一枚配布
-            record.draws++;
+            resultType = BattleResultType.Draw;
         }
 
         bool playerWin = cpuAllDead && !playerAllDead;
         bool cpuWin = playerAllDead && !cpuAllDead;
 
-        // --- 1. 敗北側のカードを分裂 ---
-        var defeatedCards = cpuWin ? playerMonsterCards : cpuMonsterCards;
-        IBattleParticipant winnerController = playerWin ? playerController : cpuController;
-        IBattleParticipant loserController = playerWin ? cpuController : playerController;
-
-        List<CardDataBase> splitCards = new();
-
-        foreach (var cardObj in defeatedCards)
+        if (playerWin) 
         {
-            if (cardObj == null) continue; // ← 追加
-            var presenter = cardObj.GetComponent<CardPresenter>();
-            if (presenter == null) continue;
+            resultType = BattleResultType.PlayerWin;
+        }
+        else 
+        {
+            resultType = BattleResultType.CpuWin;
+        }
 
-            var monster = presenter.cardData as MonsterCard;
-            if (monster == null) continue;
+        RoundRecord roundRecord = new RoundRecord
+        {
+            roundIndex = currentRound,
+            result = resultType
+        };
 
-            if (monster.sourceCards != null)
+        // プレイヤー代表モンスター
+        var playerCardObj = playerMonsterCards.FirstOrDefault(c => c != null);
+        if (playerCardObj != null && playerCardObj.TryGetComponent(out CardPresenter playerPresenter))
+        {
+            if (playerPresenter.cardData is MonsterCard playerMonster)
             {
-                foreach (var source in monster.sourceCards)
-                {
-                    if (source != null)
-                    {
-                        splitCards.Add(source);
-                        Debug.Log($"{monster.CardName} が分裂 → {source.CardName}");
-                    }
-                }
+                roundRecord.playerUsedCard = playerMonster;
+                if (playerCardObj.TryGetComponent(out MeshController mc))
+                    roundRecord.playerMonsterSprite = mc.GetIllust();
             }
         }
 
-        if (splitCards.Count == 0)
+        // CPU代表モンスター
+        var cpuCardObj = cpuMonsterCards.FirstOrDefault(c => c != null);
+        if (cpuCardObj != null && cpuCardObj.TryGetComponent(out CardPresenter cpuPresenter))
         {
-            Debug.Log("分裂カードが存在しません。");
-            return;
+            if (cpuPresenter.cardData is MonsterCard cpuMonster)
+            {
+                roundRecord.cpuUsedCard = cpuMonster;
+                if (cpuCardObj.TryGetComponent(out MeshController mc))
+                    roundRecord.cpuMonsterSprite = mc.GetIllust();
+            }
         }
 
-        await UniTask.Delay(1000);
+        // BattleRecord に登録
+        record.AddRoundResult(roundRecord);
+        Debug.Log($"📜 Round {roundRecord.roundIndex} 結果登録: {roundRecord.result}");
 
-        // --- 2. 勝利側が1枚選択 ---
-        CardDataBase selectedByWinner = null;
-        if (playerWin)
-        {
-            // TODO: UIで選択可能にする（暫定：ランダム）
-            selectedByWinner = splitCards[Random.Range(0, splitCards.Count)];
-            Debug.Log($"プレイヤーが {selectedByWinner.CardName} を獲得！");
-            record.playerWins++;
-        }
-        else
-        {
-            selectedByWinner = splitCards[Random.Range(0, splitCards.Count)];
-            Debug.Log($"CPUが {selectedByWinner.CardName} を獲得！");
-            record.cpuWins++;
-        }
 
-        // --- 3. 敗北側がランダムに1枚獲得 ---
-        CardDataBase selectedByLoser = splitCards[Random.Range(0, splitCards.Count)];
-        Debug.Log($"🎁 敗北側が {selectedByLoser.CardName} を手札に加えた");
-
-        // --- 4. 手札に追加 ---
-        var winnerCardObj = CreateCard(selectedByWinner);
-        var loserCardObj = CreateCard(selectedByLoser);
-
-        winnerController.AddCardToHand(winnerCardObj);
-        loserController.AddCardToHand(loserCardObj);
-
-        // --- 5. モンスターカードを破棄
-        foreach (var card in playerMonsterCards) 
-        {
-            if (card != null) Destroy(card);
-        }
-
-        foreach (var card in cpuMonsterCards)
-        {
-            if (card != null) Destroy(card);
-        }
+        // 分裂カード処理
+        await HandleCardSplitAsync(resultType);
 
         // --- 6. 次のラウンドへ ---
         currentRound++;
+        if(CheckGameOver()) 
+        {
+            Debug.Log("ラウンドが規定数に到達したので、終了します…");
+            /// 戦闘結果をマネージャークラスに伝達
+            SendResult();
+            /// シーン遷移
+            var sceneManager = FindObjectOfType<MySceneManager.MySceneManager>();
+            sceneManager?.LoadResult();
+            return;
+        }
         Debug.Log("次のラウンド準備中...");
         await UniTask.Delay(2000);
         await DealCardAsync();
 
         currentState = BattleState.WaitingForReady;
         Debug.Log("配布完了。各陣営のモンスター生成を待機中...");
+    }
+
+    private async UniTask HandleCardSplitAsync(BattleResultType result)
+    {
+        var winnerCards = (result == BattleResultType.PlayerWin) ? playerMonsterCards : cpuMonsterCards;
+        var loserCards = (result == BattleResultType.PlayerWin) ? cpuMonsterCards : playerMonsterCards;
+        IBattleParticipant winnerController = (result == BattleResultType.PlayerWin) ? playerController : cpuController;
+        IBattleParticipant loserController = (result == BattleResultType.PlayerWin) ? cpuController : playerController;
+
+        List<CardDataBase> splitCards = new();
+        foreach (var cardObj in loserCards)
+        {
+            if (cardObj == null) continue;
+            if (!cardObj.TryGetComponent(out CardPresenter presenter)) continue;
+            if (presenter.cardData is MonsterCard monster && monster.sourceCards != null)
+                splitCards.AddRange(monster.sourceCards.Where(c => c != null));
+        }
+
+        if (splitCards.Count == 0)
+        {
+            Debug.Log("分裂カードなし");
+            return;
+        }
+
+        await UniTask.Delay(1000);
+
+        var selectedByWinner = splitCards[Random.Range(0, splitCards.Count)];
+        var selectedByLoser = splitCards[Random.Range(0, splitCards.Count)];
+
+        winnerController.AddCardToHand(CreateCard(selectedByWinner));
+        loserController.AddCardToHand(CreateCard(selectedByLoser));
+
+        Debug.Log($"🏆 勝者獲得: {selectedByWinner.CardName}, 敗者獲得: {selectedByLoser.CardName}");
+
+        // モンスターカード破棄
+        foreach (var c in playerMonsterCards.Concat(cpuMonsterCards))
+            if (c != null) Destroy(c);
     }
 
     private async Task DealCardAsync()
@@ -615,23 +641,67 @@ public class BattleManager : MonoBehaviour
     private bool CheckGameOver()
     {
         // 3ラウンド以上経過
-        if (currentRound >= 4) return true;
+        if (currentRound >= 4) 
+        {
+            isBattleRunning = false; 
+            return true; 
+        }
         return false;
     }
 }
 
-public class BattleRecord 
+[System.Serializable]
+public class BattleRecord
 {
-    public int playerWins = 0;
-    public int cpuWins = 0;
-    public int draws = 0;
+    // トータル結果
+    public int playerWins;
+    public int cpuWins;
+    public int draws;
+
+    // 各ラウンドの詳細
+    public List<RoundRecord> rounds = new();
 
     public void Reset()
     {
         playerWins = 0;
         cpuWins = 0;
         draws = 0;
+        rounds.Clear();
+    }
+
+    public void AddRoundResult(RoundRecord record)
+    {
+        rounds.Add(record);
+
+        switch (record.result)
+        {
+            case BattleResultType.PlayerWin:
+                playerWins++;
+                break;
+            case BattleResultType.CpuWin:
+                cpuWins++;
+                break;
+            case BattleResultType.Draw:
+                draws++;
+                break;
+        }
     }
 }
 
+public enum BattleResultType
+{
+    PlayerWin,
+    CpuWin,
+    Draw
+}
 
+[System.Serializable]
+public class RoundRecord
+{
+    public int roundIndex;
+    public MonsterCard playerUsedCard = new();
+    public MonsterCard cpuUsedCard = new();
+    public Texture playerMonsterSprite;
+    public Texture cpuMonsterSprite;
+    public BattleResultType result;
+}

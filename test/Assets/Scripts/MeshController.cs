@@ -8,6 +8,7 @@ public class MeshController : MonoBehaviour
     [SerializeField] private MeshRenderer backRenderer;      // 背面の MeshRenderer を割り当て
     [SerializeField] private Material normalMaterial;       // 通常表示用マテリアル（アセット）
     [SerializeField] private Material glitchMaterial;       // グリッチ用マテリアル（アセット）
+    [SerializeField] private MeshRenderer cardIllust;       // カードイラストのMeshRenderer
 
     // インスタンス化されたマテリアルを保持しておく（変更を戻すため）
     private Material _instanceMaterial;
@@ -108,5 +109,17 @@ public class MeshController : MonoBehaviour
             Destroy(_instanceMaterial);
             _instanceMaterial = null;
         }
+    }
+
+    public Texture GetIllust() 
+    {
+        if(cardIllust == null) { return null; }
+        var Illust = cardIllust.material.mainTexture;
+        return Illust;
+    }
+
+    public void SetIllust(Texture texture) 
+    {
+        cardIllust.material.mainTexture = texture;
     }
 }
