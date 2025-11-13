@@ -17,6 +17,7 @@ public class MonsterCard : CardDataBase
     [Header("攻撃")]
     public List<Command> Skills = new List<Command>(); 
     public float AttackInterval; // 攻撃頻度（秒）
+    public GameObject AttackEffect; //攻撃エフェクト
 
     [Header("特攻対象（任意）")]
     public CardDataBase targetCard; // 特定のカードに対して特攻

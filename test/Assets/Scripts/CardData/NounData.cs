@@ -18,4 +18,5 @@ public class NounData : CardDataBase
     [Header("攻撃")]
     public Command[] skills = new Command[3]; // 今後Commandクラスに置き換え
     public float attackInterval; // 攻撃頻度（秒）
+    public GameObject attackEffect; // 攻撃エフェクト
 }

@@ -379,6 +379,7 @@ public class MonsterCardGenerator : MonoBehaviour
         int totalHP = 0, totalAttack = 0, totalDefense = 0;
         float totalEvasion = 0; List<Command> Skills = new List<Command>();
         float attackInterval = 0; CardDataBase target = null; float multiplier = 0;
+        GameObject attackEffect = null; 
         foreach (var card in cards)
         {
             switch (card)
@@ -390,6 +391,7 @@ public class MonsterCardGenerator : MonoBehaviour
                     totalEvasion += n.evasion;
                     Skills.AddRange(n.skills);
                     attackInterval = n.attackInterval;
+                    attackEffect = n.attackEffect;
                     break;
                 case VerbData v:
                     Skills.Add(v.skillToAdd);
@@ -416,6 +418,8 @@ public class MonsterCardGenerator : MonoBehaviour
         newCard.AttackInterval = attackInterval;
         newCard.targetCard = target;
         newCard.specialMultiplier = multiplier;
+        newCard.AttackEffect = attackEffect;
+
 
         return newCard;
     }

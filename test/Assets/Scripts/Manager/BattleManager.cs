@@ -258,24 +258,21 @@ public class BattleManager : MonoBehaviour
         bool playerAllDead = playerMonsters.TrueForAll(m => m.HP <= 0);
         bool cpuAllDead = cpuMonsters.TrueForAll(m => m.HP <= 0);
 
-        BattleResultType resultType;
+        BattleResultType resultType = BattleResultType.Unknown;
 
-        if (playerAllDead && cpuAllDead) 
+        if (playerAllDead && cpuAllDead)
         {
             Debug.Log("🤝 引き分け！");
-            // 両方にカードをランダムに一枚配布
             resultType = BattleResultType.Draw;
         }
-
-        bool playerWin = cpuAllDead && !playerAllDead;
-        bool cpuWin = playerAllDead && !cpuAllDead;
-
-        if (playerWin) 
+        else if (cpuAllDead && !playerAllDead)
         {
+            Debug.Log("🎉 プレイヤー勝利！");
             resultType = BattleResultType.PlayerWin;
         }
-        else 
+        else if (playerAllDead && !cpuAllDead)
         {
+            Debug.Log("💀 CPU勝利！");
             resultType = BattleResultType.CpuWin;
         }
 
@@ -690,6 +687,7 @@ public class BattleRecord
 
 public enum BattleResultType
 {
+    Unknown,
     PlayerWin,
     CpuWin,
     Draw
