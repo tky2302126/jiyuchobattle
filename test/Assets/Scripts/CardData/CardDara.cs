@@ -92,7 +92,16 @@ public enum StatType
 {
     Attack,
     Defense,
-    Evasion
+    Evasion,
+    HP,
+    Duplicate,
+    Paralyze,
+    Burn,
+    Poison,
+    Sleep,
+    Freeze,
+    Confuse,
+    Strike,
 }
 
 public enum EffectDurationType
@@ -112,5 +121,6 @@ public enum MonsterCondition
     Poison = 1 << 2,  // 毒
     Sleep = 1 << 3,  // 眠り
     Freeze = 1 << 4,  // 凍り
-    Confuse = 1 << 5   // 混乱
+    Confuse = 1 << 5,   // 混乱
+    Strike = 1 << 6,    // 必中
 }

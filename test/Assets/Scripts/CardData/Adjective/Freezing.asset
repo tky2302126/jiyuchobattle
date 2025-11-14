@@ -15,8 +15,8 @@ MonoBehaviour:
   category: 2
   cardName: "\u51CD\u3066\u3064\u304F"
   hpBonus: 100
-  attackBonus: 20
-  defenseBonus: 0
+  attackBonus: 0
+  defenseBonus: 20
   evasionBonus: 0
   targetCard: {fileID: 0}
   specialMultiplier: 1

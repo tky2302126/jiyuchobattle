@@ -310,6 +310,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d98aa945c1fec17418427550a87f35dd, type: 2}
   - {fileID: 11400000, guid: 7fd5334dcb7921541b8cdbe2d70066df, type: 2}
   - {fileID: 11400000, guid: dfa1f07271c218b4099496893269650f, type: 2}
+  - {fileID: 11400000, guid: 02e008edeb7a3f34fa3a6723935ac5d3, type: 2}
+  - {fileID: 11400000, guid: 6473c2be054ca5f4081ce0ab5671b38b, type: 2}
+  - {fileID: 11400000, guid: 3ac8c61cfc2d92641b689d27ace71b2f, type: 2}
+  - {fileID: 11400000, guid: e1466bf1040fd16439dc9adc5dc8da58, type: 2}
+  - {fileID: 11400000, guid: 8b084967b7c235e499704d19103ca13e, type: 2}
+  - {fileID: 11400000, guid: 63f6965282692fd4cbf4ad68768e8b4b, type: 2}
+  - {fileID: 11400000, guid: 23e345572e2edaa4f9117cad17f8576a, type: 2}
+  - {fileID: 11400000, guid: 6a0889a9f0185e24b9900e94d75f5e42, type: 2}
+  - {fileID: 11400000, guid: 8940c950f43d1b942986e7e37efb13a7, type: 2}
+  - {fileID: 11400000, guid: f96090348c6edac47a06f5e0a3baf61b, type: 2}
+  - {fileID: 11400000, guid: 081e042e4da2b8d4dafe53144f59d134, type: 2}
   dragManager: {fileID: 269613148}
   spawnPoint: {fileID: 429184174}
   stopPoint: {fileID: 1013437098}

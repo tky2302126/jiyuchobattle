@@ -14,8 +14,9 @@ public class AdjectiveData : CardDataBase
     public int hpBonus;
     public int attackBonus;
     public int defenseBonus;
-    [Range(0f, 1f)]
+    [Range(-1f, 1f)]
     public float evasionBonus;
+    public float attackIntervalBonus;
 
     [Header("特攻対象（任意）")]
     public CardDataBase targetCard; // 特定のカードに対して特攻

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b42995b2c8590c48b48624748668308, type: 3}
+  m_Name: Golem
+  m_EditorClassIdentifier: 
+  category: 1
+  cardName: "\u30B4\u30FC\u30EC\u30E0"
+  HP: 300
+  attack: 100
+  defense: 250
+  evasion: 0
+  skills:
+  - {fileID: 11400000, guid: 370ddd8b81bb60a4eb89a8dffe89ece1, type: 2}
+  - {fileID: 11400000, guid: 9b81a2b6acf2d204ba23a53aa96aa61a, type: 2}
+  - {fileID: 11400000, guid: ef6b2de0bccdfcb4abd2e5753e5ac944, type: 2}
+  attackInterval: 1
+  attackEffect: {fileID: 4251224118621935960, guid: 65cafc57657fb5b46813d8f9a55ffc63,
+    type: 3}

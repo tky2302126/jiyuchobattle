@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using System.Threading.Tasks;
 using System.Linq;
 
+
 /// <summary>
 /// ゲーム全体の進行を制御するメインループマネージャー
 /// </summary>
@@ -26,8 +27,8 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private GameObject cardPrefab;
     [SerializeField] private Transform spawnPoint;
 
-    private List<MonsterCard> playerMonsters = new();
-    private List<MonsterCard> cpuMonsters = new();
+    private List<MonsterCard> playerMonsters;
+    private List<MonsterCard> cpuMonsters;
 
     private List<GameObject> playerMonsterCards = new();
     private List<GameObject> cpuMonsterCards = new();
@@ -149,8 +150,6 @@ public class BattleManager : MonoBehaviour
             playerStatuses.Add(new MonsterStatus(monsterCard,HpBar, card));
         }
 
-        // foreach (var m in playerMonsters) playerStatuses.Add(new MonsterStatus(m));
-
         cpuStatuses.Clear();
         foreach (var card in cpuMonsterCards)
         {
@@ -161,8 +160,6 @@ public class BattleManager : MonoBehaviour
             var HpBar = card.GetComponentInChildren<HPBarController>();
             cpuStatuses.Add(new MonsterStatus(monsterCard, HpBar, card));
         }
-
-        // foreach (var m in cpuMonsters) cpuStatuses.Add(new MonsterStatus(m));
 
         Debug.Log("⚔️ バトル開始！");
         currentState = BattleState.InBattle;
@@ -195,7 +192,7 @@ public class BattleManager : MonoBehaviour
             // プレイヤー側の攻撃処理
             foreach (var status in playerStatuses)
             {
-                if (status.Monster.HP <= 0) continue;
+                if (status.CurrentHP <= 0) continue;
 
                 status.ElapsedTime += tickInterval;
                 if (status.ElapsedTime >= status.Monster.AttackInterval)
@@ -213,7 +210,7 @@ public class BattleManager : MonoBehaviour
             // CPU側の攻撃処理
             foreach (var status in cpuStatuses)
             {
-                if (status.Monster.HP <= 0) continue;
+                if (status.CurrentHP <= 0) continue;
 
                 status.ElapsedTime += tickInterval;
                 if (status.ElapsedTime >= status.Monster.AttackInterval)
@@ -255,8 +252,8 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private async UniTask HandleBattleEndAsync()
     {
-        bool playerAllDead = playerMonsters.TrueForAll(m => m.HP <= 0);
-        bool cpuAllDead = cpuMonsters.TrueForAll(m => m.HP <= 0);
+        bool playerAllDead = playerStatuses.TrueForAll(states => states.CurrentHP <= 0);
+        bool cpuAllDead = cpuStatuses.TrueForAll(states => states.CurrentHP <= 0);
 
         BattleResultType resultType = BattleResultType.Unknown;
 
@@ -475,6 +472,10 @@ public class BattleManager : MonoBehaviour
 
         // --- 🌀 突進アニメーション ---
         AnimateAttackAsync(attacker.owner, isPlayer).Forget();
+
+        // --- エフェクト再生---
+        PlayAttackEffect(attacker, chosenTargets);
+
         // 3. コマンドを対象に実行
         foreach (var target in chosenTargets)
         {
@@ -496,6 +497,25 @@ public class BattleManager : MonoBehaviour
             {
                 Debug.Log($"💀 {target.Monster.CardName} は倒れた！");
             }
+        }
+    }
+
+    private void PlayAttackEffect(MonsterStatus attacker, List<MonsterStatus> targets)
+    {
+        if (attacker.Monster.AttackEffect == null) return;
+        var effectPrefab = attacker.Monster.AttackEffect;
+
+        foreach(var target in targets) 
+        {
+            Vector3 spawnPos = target.owner.transform.position;
+            spawnPos += new Vector3(0, 0, -0.1f);
+
+            // 生成
+            GameObject effect = GameObject.Instantiate(
+                effectPrefab,
+                spawnPos,
+                Quaternion.identity
+            );
         }
     }
 
@@ -554,6 +574,7 @@ public class BattleManager : MonoBehaviour
     private int CalculateDamage(MonsterStatus caster, MonsterStatus target, Command Selected)
     {
         int baseDamage = caster.Monster.Attack;
+        var defence = target.Monster.Defense;
 
         bool hasTarget = target.Monster.sourceCards != null &&
                          target.Monster.sourceCards.Exists(src => src != null && src == caster.Monster.targetCard);
@@ -569,7 +590,9 @@ public class BattleManager : MonoBehaviour
         // クリティカルなどを後で追加可能
         // if (Random.value < caster.Monster.CriticalRate) baseDamage *= 2;
 
-        return Mathf.Max(0, baseDamage);
+        int result = (int)Mathf.Max(baseDamage * 0.1f, baseDamage - defence);
+
+        return result;
     }
 
     /// <summary>
@@ -637,6 +660,10 @@ public class BattleManager : MonoBehaviour
 
     private bool CheckGameOver()
     {
+#if false
+        return false;
+#endif
+
         // 3ラウンド以上経過
         if (currentRound >= 4) 
         {
@@ -645,6 +672,84 @@ public class BattleManager : MonoBehaviour
         }
         return false;
     }
+
+    //public async UniTask AutoBattleAsync(int battleCount)
+    //{
+    //    cardStats.Clear();
+
+    //    for (int i = 0; i < battleCount; i++)
+    //    {
+    //        Debug.Log($"--- Auto Battle {i + 1} ---");
+
+    //        // モンスターを初期化
+    //        InitBattle();
+
+    //        // 戦闘実行
+    //        BattleResultType result = await StartBattleAsync();
+
+    //        // 使われたカードを記録
+    //        RecordBattleResult(playerMonsters, result == BattleResultType.PlayerWin);
+    //        RecordBattleResult(cpuMonsters, result == BattleResultType.CpuWin);
+    //    }
+
+    //    // 最後に CSV を保存
+    //    SaveBattleStatsToCSV();
+    //}
+
+    //private void RecordBattleResult(List<MonsterStatus> monsters, bool isWinner)
+    //{
+    //    foreach (var m in monsters)
+    //    {
+    //        if (m == null || m.Monster == null) continue;
+
+    //        MonsterCard card = m.Monster;
+
+    //        if (!cardStats.ContainsKey(card))
+    //        {
+    //            cardStats[card] = new CardBattleStats()
+    //            {
+    //                card = card,
+    //                winCount = 0,
+    //                loseCount = 0,
+    //                drawCount = 0
+    //            };
+    //        }
+
+    //        if (isWinner) cardStats[card].winCount++;
+    //        else cardStats[card].loseCount++;
+    //    }
+    //}
+
+    //private void SaveBattleStatsToCSV()
+    //{
+    //    string path = Path.Combine(Application.dataPath, "Records");
+    //    if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+
+    //    string file = Path.Combine(path, $"battle_stats_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+
+    //    using (StreamWriter writer = new StreamWriter(file))
+    //    {
+    //        writer.WriteLine("CardName,Win,Lose,Draw,WinRate");
+
+    //        foreach (var kv in cardStats)
+    //        {
+    //            var s = kv.Value;
+    //            int total = s.winCount + s.loseCount + s.drawCount;
+    //            float winRate = total > 0 ? (float)s.winCount / total : 0;
+
+    //            writer.WriteLine($"{s.card.CardName},{s.winCount},{s.loseCount},{s.drawCount},{winRate:F2}");
+    //        }
+    //    }
+
+    //    Debug.Log($"CSV Saved: {file}");
+    //}
+
+    //public void OnClickRunAutoBattle()
+    //{
+    //    int count = 1000; // 任意
+    //    AutoBattleAsync(count).Forget();
+    //}
+
 }
 
 [System.Serializable]
@@ -697,8 +802,8 @@ public enum BattleResultType
 public class RoundRecord
 {
     public int roundIndex;
-    public MonsterCard playerUsedCard = new();
-    public MonsterCard cpuUsedCard = new();
+    public MonsterCard playerUsedCard;
+    public MonsterCard cpuUsedCard;
     public Texture playerMonsterSprite;
     public Texture cpuMonsterSprite;
     public BattleResultType result;

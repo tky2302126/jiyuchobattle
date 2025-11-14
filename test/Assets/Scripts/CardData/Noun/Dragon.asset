@@ -19,7 +19,9 @@ MonoBehaviour:
   defense: 0
   evasion: 0
   skills:
-  - {fileID: 11400000, guid: fd9f996ae029ba94aa45fd9761fd4dda, type: 2}
+  - {fileID: 11400000, guid: 68014793801ecfa44985aa2db19952cb, type: 2}
+  - {fileID: 11400000, guid: ef6b2de0bccdfcb4abd2e5753e5ac944, type: 2}
+  - {fileID: 11400000, guid: 762a11e287cc36744b6c7083c4d0d792, type: 2}
   attackInterval: 2
   attackEffect: {fileID: 4629114157452207526, guid: 43d096d0c63103040b670522da48f461,
     type: 3}

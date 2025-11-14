@@ -401,6 +401,7 @@ public class MonsterCardGenerator : MonoBehaviour
                     totalAttack += a.attackBonus;
                     totalDefense += a.defenseBonus;
                     totalEvasion += a.evasionBonus;
+                    attackInterval += a.attackIntervalBonus;
                     if (a.targetCard != null)
                     {
                         target = a.targetCard;
