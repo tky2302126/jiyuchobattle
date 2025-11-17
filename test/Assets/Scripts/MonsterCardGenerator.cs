@@ -10,6 +10,7 @@ public class MonsterCardGenerator : MonoBehaviour
 {
     [SerializeField] private GameObject cardPrefab;
     [SerializeField] private GameObject fusionEffect;
+    [SerializeField] private TextToImageQueue t2iQueue; // Queue を Inspector でアタッチ
 
     private TextToImage _t2I = new TextToImage();
 
@@ -454,8 +455,10 @@ public class MonsterCardGenerator : MonoBehaviour
         if (textSetter != null) textSetter.SetMonsterCardText(monsterCard);
 
         var renderer = newCard.GetComponentInChildren<MeshRenderer>();
-        await SetIllust(renderer, sourceData);
-
+        var progressBar = newCard.GetComponentInChildren<ProgressBarController>();
+        /// idと一緒にラップして送る
+        await SetIllust(renderer, sourceData, progressBar);
+        
         // --- 回転（表向きに） ---
         await newCard.transform.DORotateQuaternion(endRot, 0.5f).SetEase(Ease.InOutSine).AsyncWaitForCompletion();
 
@@ -481,6 +484,33 @@ public class MonsterCardGenerator : MonoBehaviour
         RequestData req = new() { prompt = prompt };
         var json = JsonUtility.ToJson(req);
         Texture2D tex = await _t2I.PostT2I(json);
+        if (tex != null)
+        {
+            mr.material.mainTexture = tex;
+            Debug.Log("イラスト生成成功");
+        }
+        else Debug.LogError("イラスト生成失敗");
+    }
+
+    private async UniTask SetIllust(MeshRenderer mr, List<CardDataBase> cards, ProgressBarController progressBar)
+    {
+        List<string> adjectives = new();
+        List<string> verbs = new();
+        string noun = "";
+
+        foreach (var card in cards)
+        {
+            if (card is AdjectiveData adj) adjectives.Add(adj.name);
+            else if (card is VerbData v) verbs.Add(v.name);
+            else if (card is NounData n) noun += n.name + " ";
+        }
+
+        string prompt = $"{string.Join(" ", adjectives)} {string.Join(" ", verbs)} {noun}".Trim().ToLower();
+        prompt += ", fantasy monster, concept art, digital painting";
+
+        RequestData req = new() { prompt = prompt };
+        var json = JsonUtility.ToJson(req);
+        Texture2D tex = await _t2I.PostT2I(json, progressBar);
         if (tex != null)
         {
             mr.material.mainTexture = tex;
