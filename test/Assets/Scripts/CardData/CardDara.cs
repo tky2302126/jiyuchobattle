@@ -64,7 +64,7 @@ public class Command : ScriptableObject
     public int targetNum;           // 対象数
     public bool IsSelf;             // 自身に対する効果かどうか
 
-    public CommandEffect action;    // 付帯効果
+    public CommandEffect Effect;    // 付帯効果
 }
 
 [CreateAssetMenu(fileName = "NewCommand", menuName = "Card/コマンドエフェクト", order = 4)]
@@ -102,6 +102,7 @@ public enum StatType
     Freeze,
     Confuse,
     Strike,
+    Critical,
 }
 
 public enum EffectDurationType

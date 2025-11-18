@@ -27,8 +27,8 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private GameObject cardPrefab;
     [SerializeField] private Transform spawnPoint;
 
-    private List<MonsterCard> playerMonsters;
-    private List<MonsterCard> cpuMonsters;
+    private List<MonsterCard> playerMonsters = new List<MonsterCard>();
+    private List<MonsterCard> cpuMonsters = new List<MonsterCard>();
 
     private List<GameObject> playerMonsterCards = new();
     private List<GameObject> cpuMonsterCards = new();
@@ -437,7 +437,12 @@ public class BattleManager : MonoBehaviour
 
         if (selectedCommand.IsSelf) 
         {
-            ApplyEffect(attacker, attacker);
+            var effect = selectedCommand.Effect;
+            if(effect != null) 
+            {
+                ApplyEffect(attacker, attacker, effect);
+            }
+            
             return;
         }
 
@@ -490,7 +495,11 @@ public class BattleManager : MonoBehaviour
             // *用実装
             var damage = CalculateDamage(attacker, target, selectedCommand);
             TakeDamage(target, damage);
-            ApplyEffect(attacker, target);
+            var effect = selectedCommand.Effect;
+            if(effect != null) 
+            {
+                ApplyEffect(attacker, target, effect);
+            }
 
             // HP0チェック
             if (target.CurrentHP <= 0)
@@ -616,10 +625,9 @@ public class BattleManager : MonoBehaviour
     /// <summary>
     /// 効果適用（ダメージや状態異常など、コマンド効果全般）
     /// </summary>
-    private void ApplyEffect(MonsterStatus caster, MonsterStatus target)
+    private void ApplyEffect(MonsterStatus caster, MonsterStatus target, CommandEffect effect)
     {
-        // 今後ここにバフ・デバフ・状態異常などを追加
-        // e.g. if (command.HasStatusEffect) ApplyStatus(target, command.StatusEffect);
+        
     }
 
     public void SetMonster(MonsterCard monsterCard, bool isPlayer) 

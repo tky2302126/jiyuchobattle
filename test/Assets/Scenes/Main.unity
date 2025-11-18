@@ -1854,6 +1854,7 @@ MonoBehaviour:
     type: 3}
   fusionEffect: {fileID: 3525863758880457313, guid: 4f2eff9033dec1342a9044e3c1b69aaf,
     type: 3}
+  t2iQueue: {fileID: 0}
 --- !u!1 &1490445635
 GameObject:
   m_ObjectHideFlags: 0

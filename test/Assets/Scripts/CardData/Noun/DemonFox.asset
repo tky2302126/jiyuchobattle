@@ -23,4 +23,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 39818bddb4df94643bbb6ccf02eb6da4, type: 2}
   - {fileID: 11400000, guid: 7f282f75128215e40bcda4ec064ef5ba, type: 2}
   attackInterval: 1
-  attackEffect: {fileID: 0}
+  attackEffect: {fileID: 2075673354358546880, guid: da61249486a47fb4ab20c5dada35437b,
+    type: 3}

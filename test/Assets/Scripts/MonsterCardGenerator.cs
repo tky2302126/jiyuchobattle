@@ -13,6 +13,7 @@ public class MonsterCardGenerator : MonoBehaviour
     [SerializeField] private TextToImageQueue t2iQueue; // Queue を Inspector でアタッチ
 
     private TextToImage _t2I = new TextToImage();
+    private int requestID = 0;
 
     public bool IsPlayerCreateMonster(List<GameObject> sourceCards) 
     {
@@ -456,6 +457,7 @@ public class MonsterCardGenerator : MonoBehaviour
 
         var renderer = newCard.GetComponentInChildren<MeshRenderer>();
         var progressBar = newCard.GetComponentInChildren<ProgressBarController>();
+        new RequestedBar() { RequestID = requestID, Progressbar = progressBar };
         /// idと一緒にラップして送る
         await SetIllust(renderer, sourceData, progressBar);
         
@@ -518,4 +520,10 @@ public class MonsterCardGenerator : MonoBehaviour
         }
         else Debug.LogError("イラスト生成失敗");
     }
+}
+
+public class RequestedBar 
+{
+    public int RequestID;
+    public ProgressBarController Progressbar;
 }
