@@ -9,6 +9,7 @@ public class CardTextSetter : MonoBehaviour
 {
     [SerializeField] TextMeshPro title;
     [SerializeField] TextMeshPro description;
+    [SerializeField] TextMeshPro commandList;
     [SerializeField] TextMeshPro hp;
     private Camera mainCamera;
 
@@ -30,7 +31,8 @@ public class CardTextSetter : MonoBehaviour
                 if (!isHovered)
                 {
                     isHovered = true;
-                    CardTooltip.Instance.Show(description.text, Input.mousePosition);
+                    var text = title.text + "\n" + description.text;
+                    CardTooltip.Instance.Show(text, Input.mousePosition);
                 }
                 return; // 他のカードを誤ってHideしないようにここでリターン
             }
@@ -65,6 +67,15 @@ public class CardTextSetter : MonoBehaviour
                                    $"攻撃力: {nData.attack}\n" +
                                    $"防御力: {nData.defense}\n" +
                                    $"回避: {nData.evasion * 100f:F1}% \n";
+
+                // スキル情報も列挙（Commandクラスの内容に応じて調整）
+                if (nData.skills != null)
+                {
+                    foreach (var skill in nData.skills)
+                    {
+                        commandList.text += $"・ {skill.CommandName}\n";
+                    }
+                }
                 break;
             
             case cardCategory.Verb:
@@ -80,11 +91,10 @@ public class CardTextSetter : MonoBehaviour
             case cardCategory.Adj:
                 var aData = (AdjectiveData)cardData;
                 title.text = aData.CardName;
-                description.text = "以下の補正を与える\n"+
-                                   $"HP: {aData.hpBonus}\n" +
+                description.text = $"HP: {aData.hpBonus}\n" +
                                    $"攻撃力: {aData.attackBonus}\n" +
                                    $"防御力: {aData.defenseBonus}\n" +
-                                   $"回避: {aData.evasionBonus * 100f:F1}% \n";
+                                   $"回避: {aData.evasionBonus * 100f:F1}% ";
 
                 if(aData.targetCard != null) 
                 {
@@ -118,17 +128,16 @@ public class CardTextSetter : MonoBehaviour
         // HP/攻撃力/防御力/回避率を表示
         description.text = $"攻撃力: {monsterCard.Attack}\n" +
                            $"防御力: {monsterCard.Defense}\n" +
-                           $"回避: {monsterCard.Evasion * 100f:F1}%\n";
+                           $"回避: {monsterCard.Evasion * 100f:F1}%";
 
         // スキル情報も列挙（Commandクラスの内容に応じて調整）
-        // if (monsterCard.Skills != null && monsterCard.Skills.Count > 0)
-        // {
-        //     description.text += "\nスキル:\n";
-        //     foreach (var skill in monsterCard.Skills)
-        //     {
-        //         description.text += $"- {skill.name}\n"; // Commandクラスにnameがある前提
-        //     }
-        // }
+         if (monsterCard.Skills != null && monsterCard.Skills.Count > 0)
+        {
+            foreach (var skill in monsterCard.Skills)
+            {
+                commandList.text += $"・ {skill.CommandName}\n"; // Commandクラスにnameがある前提
+            }
+        }
 
         // 特殊効果があれば表示
         if (monsterCard.targetCard != null)

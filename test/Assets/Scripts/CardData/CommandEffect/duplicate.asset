@@ -15,6 +15,6 @@ MonoBehaviour:
   selfChanges:
   - statType: 4
     changeAmount: 1
-    durationType: 1
+    durationType: 0
     durationValue: 0
   targetChanges: []

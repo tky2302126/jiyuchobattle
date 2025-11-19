@@ -15,6 +15,10 @@ MonoBehaviour:
   selfChanges: []
   targetChanges:
   - statType: 0
-    changeAmount: -20
-    durationType: 3
+    changeAmount: -100
+    durationType: 2
+    durationValue: 3
+  - statType: 1
+    changeAmount: -100
+    durationType: 2
     durationValue: 3

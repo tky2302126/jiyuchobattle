@@ -17,4 +17,4 @@ MonoBehaviour:
   power: 20
   targetNum: 1
   IsSelf: 0
-  action: {fileID: 11400000, guid: d91ea61c9312dcf48a25d4731ebabdee, type: 2}
+  Effect: {fileID: 11400000, guid: d91ea61c9312dcf48a25d4731ebabdee, type: 2}

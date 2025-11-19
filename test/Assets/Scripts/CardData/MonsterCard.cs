@@ -30,4 +30,21 @@ public class MonsterCard : CardDataBase
     }
 
     [SerializeField] private string cardName;
+
+    public MonsterCard Clone()
+    {
+        var clone = (MonsterCard)this.MemberwiseClone();
+
+        // --- List のディープコピー ---
+        clone.sourceCards = new List<CardDataBase>(this.sourceCards);
+        clone.Skills = new List<Command>(this.Skills);
+
+        // --- 参照型はコピー or 共有どちらでも安全なように ---
+        clone.targetCard = this.targetCard;
+        clone.AttackEffect = this.AttackEffect;
+
+        // cardName（string）はイミュータブルなのでそのままで OK
+
+        return clone;
+    }
 }

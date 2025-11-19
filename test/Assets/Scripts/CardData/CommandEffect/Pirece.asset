@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Pirece
+  m_Name: pirece
   m_EditorClassIdentifier: Assembly-CSharp::CommandEffect
   selfChanges:
-  - statType: 12
+  - statType: 11
     changeAmount: 30
-    durationType: 0
+    durationType: 1
     durationValue: 0
   targetChanges: []

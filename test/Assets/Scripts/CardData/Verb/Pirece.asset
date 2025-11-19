@@ -15,4 +15,4 @@ MonoBehaviour:
   category: 3
   cardName: "\u8CAB\u304F"
   modifyBehavior: 0
-  skillToAdd: {fileID: 11400000, guid: fd9f996ae029ba94aa45fd9761fd4dda, type: 2}
+  skillToAdd: {fileID: 11400000, guid: bdc782b6c46a6fb488e13cec7868c498, type: 2}

@@ -16,7 +16,7 @@ MonoBehaviour:
   cardName: "\u72C2\u3063\u305F"
   hpBonus: 100
   attackBonus: 100
-  defenseBonus: -300
+  defenseBonus: -100
   evasionBonus: 0
   attackIntervalBonus: 0
   targetCard: {fileID: 0}

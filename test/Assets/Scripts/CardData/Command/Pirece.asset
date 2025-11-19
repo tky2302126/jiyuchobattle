@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Command
   CommandName: "\u8CAB\u304F"
   category: 1
-  power: 20
+  power: 30
   targetNum: 1
   IsSelf: 0
-  action: {fileID: 0}
+  Effect: {fileID: 11400000, guid: cf7f223e60a21034b906cea2075fdf8f, type: 2}

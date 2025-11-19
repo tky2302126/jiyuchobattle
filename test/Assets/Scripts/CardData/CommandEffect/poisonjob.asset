@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: poisonjob
   m_EditorClassIdentifier: Assembly-CSharp::CommandEffect
-  selfChanges: []
-  targetChanges:
+  selfChanges:
   - statType: 7
     changeAmount: 30
-    durationType: 0
+    durationType: 2
     durationValue: 0
+  targetChanges: []

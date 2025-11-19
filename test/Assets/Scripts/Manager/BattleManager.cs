@@ -3,6 +3,7 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using System.Threading.Tasks;
 using System.Linq;
+using Unity.VisualScripting;
 
 
 /// <summary>
@@ -375,16 +376,6 @@ public class BattleManager : MonoBehaviour
 
     }
 
-    /// <summary>
-    /// ランダムに生きているモンスターを取得
-    /// </summary>
-    private MonsterStatus GetRandomAlive(List<MonsterStatus> list)
-    {
-        var alive = list.FindAll(m => m.CurrentHP > 0);
-        if (alive.Count == 0) return null;
-        return alive[Random.Range(0, alive.Count)];
-    }
-
     private GameObject CreateCard(CardDataBase cardData) 
     {
         GameObject cardObj = Instantiate(cardPrefab, spawnPoint.position, Quaternion.identity);
@@ -399,6 +390,7 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void PerformAttack(MonsterStatus attacker, List<MonsterStatus> targets, bool isPlayer)
     {
+
         if (attacker == null || targets == null || targets.Count == 0) return;
 
         var Attacker = attacker.Monster;
@@ -421,6 +413,11 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
+        // 0. 攻撃可能判定の確認
+        var canAttack = CheckCanAttack(attacker);
+
+        if (!canAttack)  return; 
+
         // 1. コマンドをランダム抽選
         Command selectedCommand = null;
         if (Attacker.Skills != null && Attacker.Skills.Count > 0)
@@ -435,6 +432,7 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
+        // 対象が自身
         if (selectedCommand.IsSelf) 
         {
             var effect = selectedCommand.Effect;
@@ -442,71 +440,239 @@ public class BattleManager : MonoBehaviour
             {
                 ApplyEffect(attacker, attacker, effect);
             }
+        }
+        else 
+        {
+            // 1. コマンドの対象を決める
+            List<MonsterStatus> chosenTargets = new();
+
+            if (selectedCommand.targetNum >= targets.Count)
+            {
+                chosenTargets.AddRange(targets); // 全員対象
+            }
+            else
+            {
+                // ランダムに targetNum 体選ぶ
+                var alive = new List<MonsterStatus>(targets);
+                for (int i = 0; i < selectedCommand.targetNum; i++)
+                {
+                    if (alive.Count == 0) break;
+                    int idx = Random.Range(0, alive.Count);
+                    chosenTargets.Add(alive[idx]);
+                    alive.RemoveAt(idx);
+                }
+            }
+
+            // 2. 最初のターゲットを突進目標に
+            var firstTarget = chosenTargets[0];
+            var targetObj = firstTarget.owner;
+            if (targetObj == null)
+            {
+                Debug.LogWarning("⚠️ targetObj が見つかりません");
+                return;
+            }
+
+            // --- 🌀 突進アニメーション ---
+            AnimateAttackAsync(attacker.owner, isPlayer).Forget();
+
+            // --- エフェクト再生---
+            PlayAttackEffect(attacker, chosenTargets);
+
+            // 3. コマンドを対象に実行
+
+            // stateChangeを含めたMonsterStatusを作成
+            var crrAttacker = GetCurrentStatus(attacker);
+            foreach (var target in chosenTargets)
+            {
+                var crrTarget = GetCurrentStatus(target);
+                // 回避判定
+                if (attacker.Condition.HasFlag(MonsterCondition.Strike))
+                {
+                    Debug.Log($"{attacker.Monster.CardName}の必中効果発動！");
+                    attacker.Condition &= MonsterCondition.Strike;
+                }
+                else if (Random.value < crrTarget.Monster.Evasion)
+                {
+                    Debug.Log($"{target.Monster.CardName} が {selectedCommand.CommandName} を回避！");
+                    continue;
+                }
+
+                // CommandAction による攻撃処理
+                // *用実装
+                var damage = CalculateDamage(crrAttacker, crrTarget, selectedCommand);
+                TakeDamage(target, damage);
+                var effect = selectedCommand.Effect;
+                if (effect != null)
+                {
+                    ApplyEffect(attacker, target, effect);
+                }
+
+                // HP0チェック
+                if (target.CurrentHP <= 0)
+                {
+                    Debug.Log($"{target.Monster.CardName} は倒れた！");
+                }
+            }
+
+        }
             
-            return;
+        // StateChange更新
+        UpdateStateChange(attacker);
+
+        // Condition更新
+        UpdateCondition(attacker);
+    }
+
+
+    // 状態異常で攻撃できるかの判定
+    private bool CheckCanAttack(MonsterStatus monster) 
+    {
+        // 増殖
+        if(monster.Condition.HasFlag(MonsterCondition.Duplicate)) 
+        {
+            // 複製用の関数
+
+            monster.Condition &= MonsterCondition.Duplicate; //フラグ落とす
+            return false;
         }
 
-        // 2. コマンドの対象を決める
-        List<MonsterStatus> chosenTargets = new();
-
-        if (selectedCommand.targetNum >= targets.Count)
+        // 麻痺
+        if(monster.Condition.HasFlag( MonsterCondition.Paralyze)) 
         {
-            chosenTargets.AddRange(targets); // 全員対象
-        }
-        else
-        {
-            // ランダムに targetNum 体選ぶ
-            var alive = new List<MonsterStatus>(targets);
-            for (int i = 0; i < selectedCommand.targetNum; i++)
+            if (Random.value <= 0.2) 
             {
-                if (alive.Count == 0) break;
-                int idx = Random.Range(0, alive.Count);
-                chosenTargets.Add(alive[idx]);
-                alive.RemoveAt(idx);
+                Debug.Log( $"{monster.Monster.CardName} は体がしびれて動けない");
+                return false; 
             }
         }
 
-        // 3. 最初のターゲットを突進目標に
-        var firstTarget = chosenTargets[0];
-        var targetObj = firstTarget.owner;
-        if (targetObj == null)
+
+        // 凍結
+        if (monster.Condition.HasFlag(MonsterCondition.Freeze)) 
         {
-            Debug.LogWarning("⚠️ targetObj が見つかりません");
-            return;
+            monster.Condition &= MonsterCondition.Freeze;
+            if (Random.value <= 0.4)
+            {
+                Debug.Log($"{monster.Monster.CardName} は凍えて体が動かない");
+                return false;
+            }
         }
 
-        // --- 🌀 突進アニメーション ---
-        AnimateAttackAsync(attacker.owner, isPlayer).Forget();
-
-        // --- エフェクト再生---
-        PlayAttackEffect(attacker, chosenTargets);
-
-        // 3. コマンドを対象に実行
-        foreach (var target in chosenTargets)
+        // 睡眠
+        if (monster.Condition.HasFlag(MonsterCondition.Sleep)) 
         {
-            // 回避判定
-            if (Random.value < target.Monster.Evasion)
-            {
-                Debug.Log($"💨 {target.Monster.CardName} が {selectedCommand.CommandName} を回避！");
-                continue;
-            }
+            monster.Condition &= MonsterCondition.Sleep;
+            Debug.Log($"{monster.Monster.CardName} は眠っている");
+            return false;
+        }
 
-            // CommandAction による攻撃処理
-            // *用実装
-            var damage = CalculateDamage(attacker, target, selectedCommand);
-            TakeDamage(target, damage);
-            var effect = selectedCommand.Effect;
-            if(effect != null) 
-            {
-                ApplyEffect(attacker, target, effect);
-            }
+        // 
+        return true;
+    }
 
-            // HP0チェック
-            if (target.CurrentHP <= 0)
+    // StateChangeの持続時間を更新
+    private void UpdateStateChange(MonsterStatus monster) 
+    {
+        foreach(var change in monster.changes) 
+        {
+            switch (change.durationType) 
             {
-                Debug.Log($"💀 {target.Monster.CardName} は倒れた！");
+                case EffectDurationType.Permanent:
+                    break;
+
+                case EffectDurationType.UntilNextAttack:
+                    monster.changes.Remove(change);
+                    break;
+
+                case EffectDurationType.ActionCount:
+                    if(change.durationValue <= 0) 
+                    {
+                        if (change.statType == StatType.HP)
+                        {
+                            monster.CurrentHP += change.changeAmount;
+                        }
+                        monster.changes.Remove(change);
+                    }
+                    else 
+                    {
+                        if(change.statType == StatType.HP) 
+                        {
+                            monster.CurrentHP += change.changeAmount;
+                        }
+                        change.durationValue--;
+                    }
+                        break;
             }
         }
+    }
+
+    // MonsterConditionの更新
+    private void UpdateCondition(MonsterStatus monster) 
+    {
+        if (monster.Condition.HasFlag(MonsterCondition.Burn))
+        {
+            // Burn 処理
+
+            monster.Condition &= MonsterCondition.Burn;
+        }
+
+        if (monster.Condition.HasFlag(MonsterCondition.Poison))
+        {
+            // Poison 処理
+
+            monster.Condition &= MonsterCondition.Poison;
+        }
+    }
+
+    private MonsterStatus GetCurrentStatus(MonsterStatus monster) 
+    {
+        if (monster == null || monster.Monster == null)
+        {
+            Debug.LogError("GetCurrentStatus: monster or monster.Monster is null");
+            return monster;
+        }
+
+        // クローンを作成して result に詰める
+        MonsterStatus result = new MonsterStatus(monster.Monster.Clone())
+        {
+            CurrentHP = monster.CurrentHP,
+            Condition = monster.Condition
+        };
+
+        // 元ステータス
+        int baseHP = monster.Monster.HP;
+        int baseAtk = monster.Monster.Attack;
+        int baseDef = monster.Monster.Defense;
+        float baseEva = monster.Monster.Evasion; 
+
+        // 補正後
+        int finalHP = baseHP;
+        int finalAtk = baseAtk;
+        int finalDef = baseDef;
+        float finalEva = baseEva;
+
+        foreach (var change in monster.changes)
+        {
+            switch (change.statType)
+            {
+                case StatType.Attack:
+                    finalAtk += change.changeAmount;
+                    break;
+                case StatType.Defense:
+                    finalDef += change.changeAmount;
+                    break;
+                case StatType.Evasion:
+                    finalEva += change.changeAmount;
+                    break;
+            }
+        }
+
+        // クローンに反映（原本を壊さない）
+        result.Monster.Attack = finalAtk;
+        result.Monster.Defense = finalDef;
+        result.Monster.Evasion = finalEva;
+
+        return result;
     }
 
     private void PlayAttackEffect(MonsterStatus attacker, List<MonsterStatus> targets)
@@ -582,8 +748,9 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private int CalculateDamage(MonsterStatus caster, MonsterStatus target, Command Selected)
     {
-        int baseDamage = caster.Monster.Attack;
+        int baseDamage = caster.Monster.Attack + Selected.power;
         var defence = target.Monster.Defense;
+        if (defence < 0) defence = 0;
 
         bool hasTarget = target.Monster.sourceCards != null &&
                          target.Monster.sourceCards.Exists(src => src != null && src == caster.Monster.targetCard);
@@ -596,8 +763,15 @@ public class BattleManager : MonoBehaviour
             Debug.Log($"🔥 {caster.Monster.CardName} の特攻！ こうかはばつぐんだ！");
         }
 
-        // クリティカルなどを後で追加可能
-        // if (Random.value < caster.Monster.CriticalRate) baseDamage *= 2;
+        // クリティカル判定
+        if(caster.changes.Any(change => change.statType == StatType.Critical)) 
+        {
+            if(Random.value <= 0.25) 
+            {
+                Debug.Log($"クリティカルアタック！");
+                baseDamage *= 2;
+            }
+        }
 
         int result = (int)Mathf.Max(baseDamage * 0.1f, baseDamage - defence);
 
@@ -627,7 +801,26 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void ApplyEffect(MonsterStatus caster, MonsterStatus target, CommandEffect effect)
     {
-        
+        if(effect.selfChanges != null) 
+        {
+            foreach(var change in effect.selfChanges) 
+            {
+                ApplyStatChange(caster, change);
+            }
+        }
+
+        if(effect.targetChanges != null) 
+        {
+            foreach (var change in effect.selfChanges)
+            {
+                ApplyStatChange(target, change);
+            }
+        }
+    }
+
+    private void ApplyStatChange(MonsterStatus target, StatChange change) 
+    {
+        target.changes.Add(change);
     }
 
     public void SetMonster(MonsterCard monsterCard, bool isPlayer) 

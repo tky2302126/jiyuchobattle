@@ -17,7 +17,6 @@ public class CardTooltip : MonoBehaviour
     public void Show(string text, Vector3 position)
     {
         tooltipPanel.SetActive(true);
-     // tooltipPanel.transform.position = position;
         tooltipText.text = text;
     }
 

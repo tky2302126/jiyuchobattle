@@ -109,7 +109,6 @@ public enum EffectDurationType
 {
     Permanent,      // 永続
     UntilNextAttack, // 次の攻撃まで
-    TurnCount,      // nターンまで
     ActionCount     // n回行動まで
 }
 
@@ -124,4 +123,5 @@ public enum MonsterCondition
     Freeze = 1 << 4,  // 凍り
     Confuse = 1 << 5,   // 混乱
     Strike = 1 << 6,    // 必中
+    Duplicate = 1 << 7, // 複製フラグ
 }

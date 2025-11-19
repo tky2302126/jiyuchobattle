@@ -12,13 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: curse
   m_EditorClassIdentifier: Assembly-CSharp::CommandEffect
-  selfChanges:
-  - statType: 1
-    changeAmount: -30
-    durationType: 3
-    durationValue: 3
+  selfChanges: []
   targetChanges:
   - statType: 3
-    changeAmount: -30
-    durationType: 3
-    durationValue: 5
+    changeAmount: -60
+    durationType: 2
+    durationValue: 3
