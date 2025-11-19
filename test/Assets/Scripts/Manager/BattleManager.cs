@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using System.Threading.Tasks;
 using System.Linq;
 using Unity.VisualScripting;
+using static UnityEngine.GraphicsBuffer;
 
 
 /// <summary>
@@ -571,40 +572,58 @@ public class BattleManager : MonoBehaviour
     }
 
     // StateChangeの持続時間を更新
-    private void UpdateStateChange(MonsterStatus monster) 
+    private void UpdateStateChange(MonsterStatus monster)
     {
-        foreach(var change in monster.changes) 
+        if (monster == null || monster.changes == null || monster.changes.Count == 0)
+            return;
+
+        // 後ろから前にループすることで、削除してもインデックスずれを防止
+        for (int i = monster.changes.Count - 1; i >= 0; i--)
         {
-            switch (change.durationType) 
+            var change = monster.changes[i];
+
+            switch (change.durationType)
             {
                 case EffectDurationType.Permanent:
+                    // 永続効果は削除しない
                     break;
 
                 case EffectDurationType.UntilNextAttack:
-                    monster.changes.Remove(change);
+                    // 次の攻撃まで持続の効果は攻撃後に削除
+                    monster.changes.RemoveAt(i);
                     break;
 
                 case EffectDurationType.ActionCount:
-                    if(change.durationValue <= 0) 
+                    if (change.durationValue <= 0)
                     {
+                        // HP回復などの効果を適用してから削除
                         if (change.statType == StatType.HP)
-                        {
                             monster.CurrentHP += change.changeAmount;
-                        }
-                        monster.changes.Remove(change);
+                        if (monster.CurrentHP > monster.Monster.HP) monster.CurrentHP = monster.Monster.HP; // 最大値を越えないようにする
+                        monster?.HPBar?.SetHP(monster.CurrentHP, monster.Monster.HP);
+
+                        monster.changes.RemoveAt(i);
                     }
-                    else 
+                    else
                     {
-                        if(change.statType == StatType.HP) 
-                        {
+                        // 毎ターン / 毎行動の効果を適用
+                        if (change.statType == StatType.HP)
                             monster.CurrentHP += change.changeAmount;
-                        }
+                        if (monster.CurrentHP > monster.Monster.HP) monster.CurrentHP = monster.Monster.HP;
+                        monster?.HPBar?.SetHP(monster.CurrentHP, monster.Monster.HP);
+
+                        // 残りターン数を減らす
                         change.durationValue--;
                     }
-                        break;
+                    break;
+
+                default:
+                    Debug.LogWarning($"未知のEffectDurationType: {change.durationType}");
+                    break;
             }
         }
     }
+
 
     // MonsterConditionの更新
     private void UpdateCondition(MonsterStatus monster) 
