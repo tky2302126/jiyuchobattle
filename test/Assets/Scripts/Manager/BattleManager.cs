@@ -199,7 +199,6 @@ public class BattleManager : MonoBehaviour
             if (battleElapsedTime >= slipDamageInterval)
             {
                 ApplySlipDamageToAllMonsters();
-                battleElapsedTime = 0f; // リセットして次回に備える
             }
 
             // 勝敗チェック
@@ -351,6 +350,7 @@ public class BattleManager : MonoBehaviour
             return;
         }
         Debug.Log("次のラウンド準備中...");
+        battleElapsedTime = 0;
         await UniTask.Delay(2000);
         await DealCardAsync();
 
