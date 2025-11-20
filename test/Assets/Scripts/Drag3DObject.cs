@@ -251,4 +251,10 @@ public class Drag3DObject : MonoBehaviour
         cardsInHandSlot.RemoveAll(c => c == null);
         return cardsInHandSlot.Count;
     }
+
+    public void AddCardToField(GameObject obj) 
+    {
+        cardsInFieldSlot.Add(obj);
+        UpdateCardPositions();
+    }
 }

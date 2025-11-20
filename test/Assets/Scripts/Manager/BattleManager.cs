@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using Unity.VisualScripting;
 using static UnityEngine.GraphicsBuffer;
+using UnityEngine.UI;
 
 
 /// <summary>
@@ -35,6 +36,10 @@ public class BattleManager : MonoBehaviour
     private List<GameObject> playerMonsterCards = new();
     private List<GameObject> cpuMonsterCards = new();
 
+    // BattleManager.cs
+    private List<MonsterStatus> pendingPlayerAdditions = new List<MonsterStatus>();
+    private List<MonsterStatus> pendingCpuAdditions = new List<MonsterStatus>();
+
     private BattleState currentState = BattleState.Initialize;
     public  BattleState CurrentState => currentState;
     private bool isBattleRunning = false;
@@ -44,6 +49,9 @@ public class BattleManager : MonoBehaviour
     private BattleRecord record = new();
     public BattleRecord Record => record;
     private int currentRound = 1;
+
+    private float battleElapsedTime = 0f;   // 戦闘経過時間
+    [SerializeField] private float slipDamageInterval = 10f; // スリップダメージ発動間隔（秒）
 
     private class MonsterStatus
     {
@@ -184,6 +192,16 @@ public class BattleManager : MonoBehaviour
         Debug.Log("戦闘ループを開始します");
         while (isBattleRunning)
         {
+            // 経過時間更新
+            battleElapsedTime += tickInterval;
+
+            // 一定時間経過でスリップダメージ
+            if (battleElapsedTime >= slipDamageInterval)
+            {
+                ApplySlipDamageToAllMonsters();
+                battleElapsedTime = 0f; // リセットして次回に備える
+            }
+
             // 勝敗チェック
             if (CheckBattleEnd())
             {
@@ -224,7 +242,14 @@ public class BattleManager : MonoBehaviour
                     status.ElapsedTime = 0f;
                 }
             }
+            
 
+            playerStatuses.AddRange(pendingPlayerAdditions);
+            pendingPlayerAdditions.Clear();
+
+            cpuStatuses.AddRange(pendingCpuAdditions);
+            pendingCpuAdditions.Clear();
+            
             await UniTask.Delay((int)(tickInterval * 1000));
         }
 
@@ -415,7 +440,7 @@ public class BattleManager : MonoBehaviour
         }
 
         // 0. 攻撃可能判定の確認
-        var canAttack = CheckCanAttack(attacker);
+        var canAttack = CheckCanAttack(attacker, isPlayer);
 
         if (!canAttack)  return; 
 
@@ -526,14 +551,15 @@ public class BattleManager : MonoBehaviour
 
 
     // 状態異常で攻撃できるかの判定
-    private bool CheckCanAttack(MonsterStatus monster) 
+    private bool CheckCanAttack(MonsterStatus monster, bool isPlayer) 
     {
         // 増殖
         if(monster.Condition.HasFlag(MonsterCondition.Duplicate)) 
         {
             // 複製用の関数
-
-            monster.Condition &= MonsterCondition.Duplicate; //フラグ落とす
+            Duplicate(monster, isPlayer);
+            monster.Condition &= ~MonsterCondition.Duplicate; //フラグ落とす
+            Debug.Log($"{monster.Monster.CardName} は自身を複製した！");
             return false;
         }
 
@@ -571,6 +597,52 @@ public class BattleManager : MonoBehaviour
         return true;
     }
 
+    private void Duplicate(MonsterStatus monster, bool isPlayer)
+    {
+        if (monster == null || monster.owner == null) return;
+
+        
+        // ① オブジェクトを複製
+        GameObject obj = Instantiate(monster.owner, monster.owner.transform.position, Quaternion.identity);
+
+        // ② CardPresenter を取得・設定
+        if (!obj.TryGetComponent(out CardPresenter cardPresenter))
+        {
+            cardPresenter = obj.AddComponent<CardPresenter>();
+        }
+        var copiedMonster = monster.Monster.Clone();
+        copiedMonster.Skills.RemoveAll(cmd => cmd.name == "Duplicate");
+        cardPresenter.cardData = copiedMonster;
+
+        // ③ HPBarController を取得（子オブジェクトに存在するか確認）
+        HPBarController hpBar = obj.GetComponentInChildren<HPBarController>();
+        if (hpBar == null)
+        {
+            Debug.LogWarning($"複製した {obj.name} に HPBarController が見つかりません。Prefab を確認してください。");
+        }
+
+        hpBar.Init();
+
+        // ④ MonsterStatus を作成
+        MonsterStatus newStatus = new MonsterStatus(copiedMonster, hpBar, obj);
+
+        // ⑤ プレイヤー/CPU に登録
+        if (isPlayer)
+        {
+            pendingPlayerAdditions.Add(newStatus);
+            playerController.AddCardToField(obj);
+            playerMonsterCards.Add(obj);
+        }
+        else
+        {
+            pendingCpuAdditions.Add(newStatus);
+            cpuController.AddCardtoField(obj);
+            cpuMonsterCards.Add(obj);
+        }
+
+        Debug.Log($"{monster.Monster.CardName} を複製しました → {obj.name}");
+    }
+
     // StateChangeの持続時間を更新
     private void UpdateStateChange(MonsterStatus monster)
     {
@@ -601,6 +673,11 @@ public class BattleManager : MonoBehaviour
                             monster.CurrentHP += change.changeAmount;
                         if (monster.CurrentHP > monster.Monster.HP) monster.CurrentHP = monster.Monster.HP; // 最大値を越えないようにする
                         monster?.HPBar?.SetHP(monster.CurrentHP, monster.Monster.HP);
+
+                        if(change.statType == StatType.Duplicate) 
+                        {
+                            monster.Condition |= MonsterCondition.Duplicate;
+                        }
 
                         monster.changes.RemoveAt(i);
                     }
@@ -891,6 +968,22 @@ public class BattleManager : MonoBehaviour
             return true; 
         }
         return false;
+    }
+
+    private void ApplySlipDamageToAllMonsters()
+    {
+        Debug.Log("モンスターに疲労がたまる…");
+
+        foreach (var monster in playerStatuses)
+            ApplySlipDamage(monster);
+
+        foreach (var monster in cpuStatuses)
+            ApplySlipDamage(monster);
+    }
+
+    private void ApplySlipDamage(MonsterStatus monster) 
+    {
+        TakeDamage(monster, 50);
     }
 
     //public async UniTask AutoBattleAsync(int battleCount)

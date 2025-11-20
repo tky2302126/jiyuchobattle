@@ -285,7 +285,17 @@ public class CPUController : MonoBehaviour, IBattleParticipant
 
         await SpawnCardsFromList(cardDataList, cardsToDeal);
 
-        //Debug.Log($"🤖 CPUのカード配布完了: {cpuCardsInHandSlot.Count}枚 (名詞あり: " +
-        //    $"{cpuCardsInHandSlot.Any(c => c.GetComponent<CardPresenter>()?.cardData is NounData)})");
+    }
+
+    public GameObject CloneCard(MonsterCard monster, GameObject obj) 
+    {
+        var result = cardGenerator.CloneCard(monster, obj);
+        return null;
+    }
+
+    public void AddCardtoField(GameObject cardObj) 
+    {
+        cpuCardsInFieldSlot.Add(cardObj);
+        UpdateCardPositions();
     }
 }

@@ -1,8 +1,6 @@
 ﻿using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
-
 public class HPBarController : MonoBehaviour
 {
     [SerializeField] private Slider hpSlider;
@@ -21,11 +19,7 @@ public class HPBarController : MonoBehaviour
 
     void Start()
     {
-        mainCamera = Camera.main;
-        hpCanvas = GetComponentInChildren<Canvas>();
-        parentObject = transform.parent; // モンスター本体を想定
-        sr = hpCanvas.GetComponentInChildren<SpriteRenderer>();
-        tmp = hpCanvas.GetComponentInChildren<TextMeshPro>();
+        Init();
     }
 
     void LateUpdate()
@@ -63,8 +57,19 @@ public class HPBarController : MonoBehaviour
         }
     }
 
+    public void Init() 
+    {
+        mainCamera = Camera.main;
+        hpCanvas = GetComponentInChildren<Canvas>();
+        parentObject = transform.parent; // モンスター本体を想定
+        sr = hpCanvas.GetComponentInChildren<SpriteRenderer>();
+        tmp = hpCanvas.GetComponentInChildren<TextMeshPro>();
+    }
+
     public void SetHP(float current, float max)
     {
+        if (hpSlider == null) Debug.LogError("Slider が null です！");
+        if (hpFillImage == null) Debug.LogError("fillImage が null です！");
         UpdateUI(current, max);
     }
 

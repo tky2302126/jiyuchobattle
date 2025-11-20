@@ -10,7 +10,6 @@ public class MonsterCardGenerator : MonoBehaviour
 {
     [SerializeField] private GameObject cardPrefab;
     [SerializeField] private GameObject fusionEffect;
-    [SerializeField] private TextToImageQueue t2iQueue; // Queue を Inspector でアタッチ
 
     private TextToImage _t2I = new TextToImage();
     private int requestID = 0;
@@ -519,6 +518,17 @@ public class MonsterCardGenerator : MonoBehaviour
             Debug.Log("イラスト生成成功");
         }
         else Debug.LogError("イラスト生成失敗");
+    }
+
+    public async UniTask<GameObject> CloneCard(MonsterCard monster, GameObject obj) 
+    {
+        // monsterのコピーを生成
+
+        // objのコピーを生成
+
+        await UniTask.Delay(1);
+
+        return null;
     }
 }
 

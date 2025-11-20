@@ -21,6 +21,8 @@ public class CardManager : MonoBehaviour, IBattleParticipant
     public float moveDuration = 0.5f;
     public AnimationCurve moveCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
+    [SerializeField] private MonsterCardGenerator cardGenerator;
+
     // 既存プレハブに MonoBehaviour を付けて ScriptableObject を渡すクラス
     public void AttachRandomCard()
     {
@@ -170,6 +172,17 @@ public class CardManager : MonoBehaviour, IBattleParticipant
         }
 
         await SpawnCardsFromList(cardDataList, cardsToDeal);
+    }
+
+    public GameObject CloneCard(MonsterCard monster, GameObject obj)
+    {
+        var result = cardGenerator.CloneCard(monster, obj);
+        return null;
+    }
+
+    public void AddCardToField(GameObject obj) 
+    {
+        dragManager.AddCardToField(obj);
     }
 }
 
