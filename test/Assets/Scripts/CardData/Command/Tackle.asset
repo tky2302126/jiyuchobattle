@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: Tackle
   m_EditorClassIdentifier: Assembly-CSharp::Command
-  CommandName: "\u4F53\u5F53\u305F\u308A"
+  CommandName: "\u305F\u3044\u3042\u305F\u308A"
   category: 2
   power: 10
   targetNum: 1
-  action: {fileID: 11400000, guid: 1899f6f5c330c61448e49e90455daea7, type: 2}
+  IsSelf: 0
+  Effect: {fileID: 0}

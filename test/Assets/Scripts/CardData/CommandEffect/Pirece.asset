@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: pirece
   m_EditorClassIdentifier: Assembly-CSharp::CommandEffect
   selfChanges:
-  - statType: 11
+  - statType: 12
     changeAmount: 30
     durationType: 1
     durationValue: 0

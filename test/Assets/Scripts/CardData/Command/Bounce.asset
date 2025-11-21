@@ -15,6 +15,6 @@ MonoBehaviour:
   CommandName: "\u306F\u306D\u308B"
   category: 16
   power: 0
-  targetNum: 1
+  targetNum: 0
   IsSelf: 1
-  action: {fileID: 0}
+  Effect: {fileID: 0}

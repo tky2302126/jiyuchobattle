@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: Bind
   m_EditorClassIdentifier: Assembly-CSharp::Command
-  CommandName: "\u7DE0\u3081\u4ED8\u3051\u308B"
+  CommandName: "\u3057\u3081\u3064\u3051\u308B"
   category: 8
   power: 30
   targetNum: 1

@@ -17,4 +17,4 @@ MonoBehaviour:
   power: 30
   targetNum: 1
   IsSelf: 0
-  action: {fileID: 0}
+  Effect: {fileID: 0}
