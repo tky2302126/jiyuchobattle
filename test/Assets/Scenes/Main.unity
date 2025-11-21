@@ -349,6 +349,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  cardGenerator: {fileID: 0}
 --- !u!1 &43593484
 GameObject:
   m_ObjectHideFlags: 0
@@ -1693,6 +1694,13 @@ MonoBehaviour:
   cardPrefab: {fileID: 4899285495306982988, guid: f5fa9968752f1f24eb75238080c72586,
     type: 3}
   spawnPoint: {fileID: 456534428}
+  BuffEffect: {fileID: 3833820612815424176, guid: 83991150079781e4d89732e7bf31e8eb,
+    type: 3}
+  DebuffEffect: {fileID: 1847629424153960022, guid: 6994c68ec53b3d64293452bf5c335647,
+    type: 3}
+  HealEffect: {fileID: 7578635687126124992, guid: bd248079b3db1bd43a2c63740b56d1f2,
+    type: 3}
+  slipDamageInterval: 10
 --- !u!4 &1284906644 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6779235312889572395, guid: 52c36e60ded8d1a45b165bde5dd1590e,
@@ -1854,7 +1862,6 @@ MonoBehaviour:
     type: 3}
   fusionEffect: {fileID: 3525863758880457313, guid: 4f2eff9033dec1342a9044e3c1b69aaf,
     type: 3}
-  t2iQueue: {fileID: 0}
 --- !u!1 &1490445635
 GameObject:
   m_ObjectHideFlags: 0

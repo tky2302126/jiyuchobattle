@@ -147,7 +147,7 @@ public class BattleManager : MonoBehaviour
 
         if (playerMonsters.Count == 0 || cpuMonsters.Count == 0)
         {
-            Debug.LogWarning("❌ モンスターが生成されていません。");
+            Debug.LogWarning(" モンスターが生成されていません。");
             return;
         }
 
@@ -174,12 +174,39 @@ public class BattleManager : MonoBehaviour
             cpuStatuses.Add(new MonsterStatus(monsterCard, HpBar, card));
         }
 
-        Debug.Log("⚔️ バトル開始！");
+        // バトル開始演出
+        await PlayBattleStartCutInAsync();
+
+        Debug.Log(" バトル開始！");
         currentState = BattleState.InBattle;
         isBattleRunning = true;
 
         await BattleLoopAsync();
     }
+
+    private async UniTask PlayBattleStartCutInAsync()
+    {
+        // テキストアニメーションを再生
+
+        // ③カメラズームアウト（任意）
+        var cam = Camera.main;
+        if (cam != null)
+        {
+            float startSize = cam.orthographicSize;
+            float targetSize = startSize + 1.5f;
+            float t = 0f;
+
+            while (t < 1f)
+            {
+                t += Time.deltaTime * 1.2f;
+                cam.orthographicSize = Mathf.Lerp(startSize, targetSize, t);
+                await UniTask.Yield();
+            }
+        }
+
+        Debug.Log("戦闘開始演出完了");
+    }
+
 
     private void SendResult()
     {
@@ -288,17 +315,17 @@ public class BattleManager : MonoBehaviour
 
         if (playerAllDead && cpuAllDead)
         {
-            Debug.Log("🤝 引き分け！");
+            Debug.Log(" 引き分け！");
             resultType = BattleResultType.Draw;
         }
         else if (cpuAllDead && !playerAllDead)
         {
-            Debug.Log("🎉 プレイヤー勝利！");
+            Debug.Log(" プレイヤー勝利！");
             resultType = BattleResultType.PlayerWin;
         }
         else if (playerAllDead && !cpuAllDead)
         {
-            Debug.Log("💀 CPU勝利！");
+            Debug.Log(" CPU勝利！");
             resultType = BattleResultType.CpuWin;
         }
 
@@ -334,7 +361,7 @@ public class BattleManager : MonoBehaviour
 
         // BattleRecord に登録
         record.AddRoundResult(roundRecord);
-        Debug.Log($"📜 Round {roundRecord.roundIndex} 結果登録: {roundRecord.result}");
+        Debug.Log($" Round {roundRecord.roundIndex} 結果登録: {roundRecord.result}");
 
 
         // 分裂カード処理
@@ -426,19 +453,19 @@ public class BattleManager : MonoBehaviour
 
         if (attacker == null)
         {
-            Debug.LogError("❌ attacker が null");
+            Debug.LogError(" attacker が null");
             return;
         }
 
         if (attacker.Monster == null)
         {
-            Debug.LogError("❌ attacker.Monster が null");
+            Debug.LogError(" attacker.Monster が null");
             return;
         }
 
         if (targets == null || targets.Count == 0)
         {
-            Debug.LogWarning("⚠️ targets が空");
+            Debug.LogWarning(" targets が空");
             return;
         }
 
@@ -497,7 +524,7 @@ public class BattleManager : MonoBehaviour
             var targetObj = firstTarget.owner;
             if (targetObj == null)
             {
-                Debug.LogWarning("⚠️ targetObj が見つかりません");
+                Debug.LogWarning("targetObj が見つかりません");
                 return;
             }
 
@@ -580,7 +607,7 @@ public class BattleManager : MonoBehaviour
         // 凍結
         if (monster.Condition.HasFlag(MonsterCondition.Freeze)) 
         {
-            monster.Condition &= MonsterCondition.Freeze;
+            monster.Condition &= ~MonsterCondition.Freeze;
             if (Random.value <= 0.4)
             {
                 Debug.Log($"{monster.Monster.CardName} は凍えて体が動かない");
@@ -591,7 +618,7 @@ public class BattleManager : MonoBehaviour
         // 睡眠
         if (monster.Condition.HasFlag(MonsterCondition.Sleep)) 
         {
-            monster.Condition &= MonsterCondition.Sleep;
+            monster.Condition &= ~MonsterCondition.Sleep;
             Debug.Log($"{monster.Monster.CardName} は眠っている");
             return false;
         }
@@ -672,9 +699,13 @@ public class BattleManager : MonoBehaviour
                     if (change.durationValue <= 0)
                     {
                         // HP回復などの効果を適用してから削除
-                        if (change.statType == StatType.HP)
+                        if (change.statType == StatType.HP) 
+                        {
                             monster.CurrentHP += change.changeAmount;
-                        if (monster.CurrentHP > monster.Monster.HP) monster.CurrentHP = monster.Monster.HP; // 最大値を越えないようにする
+                            if (change.changeAmount > 0) PlayHealEffect(monster.owner.transform.position);
+                            // 最大値を越えないようにする
+                            if (monster.CurrentHP > monster.Monster.HP) monster.CurrentHP = monster.Monster.HP; 
+                        }
                         monster?.HPBar?.SetHP(monster.CurrentHP, monster.Monster.HP);
 
                         if(change.statType == StatType.Duplicate) 
@@ -793,6 +824,27 @@ public class BattleManager : MonoBehaviour
         }
     }
 
+    private void PlayBuffEffect(Vector3 positon, bool IsBuff) 
+    {
+        Vector3 spawnPos = positon + new Vector3(0, 0, -0.1f);
+        var effect = IsBuff ? BuffEffect : DebuffEffect;
+        GameObject Playeffect = GameObject.Instantiate(
+                effect,
+                spawnPos,
+                Quaternion.identity
+            );
+    }
+
+    private void PlayHealEffect(Vector3 positon) 
+    {
+        Vector3 spawnPos = positon + new Vector3(0, 0, -0.1f);
+        GameObject Playeffect = GameObject.Instantiate(
+                HealEffect,
+                spawnPos,
+                Quaternion.identity
+            );
+    }
+
     private async UniTask AnimateAttackAsync(GameObject attackerObj, bool isPlayer)
     {
         if (attackerObj == null) return;
@@ -885,13 +937,13 @@ public class BattleManager : MonoBehaviour
         target.CurrentHP -= damage;
         if (target.CurrentHP < 0) target.CurrentHP = 0;
 
-        Debug.Log($"💥 {target.Monster.CardName} は {damage} ダメージを受けた！（残りHP: {target.CurrentHP}）");
+        Debug.Log($" {target.Monster.CardName} は {damage} ダメージを受けた！（残りHP: {target.CurrentHP}）");
 
         target?.HPBar?.SetHP(target.CurrentHP, target.Monster.HP);
 
         if (target.CurrentHP == 0)
         {
-            Debug.Log($"💀 {target.Monster.CardName} は倒れた！");
+            Debug.Log($" {target.Monster.CardName} は倒れた！");
         }
     }
 
@@ -906,6 +958,10 @@ public class BattleManager : MonoBehaviour
             {
                 ApplyStatChange(caster, change);
             }
+            if(effect.selfChanges.Any(change => change.statType < StatType.HP)) 
+            {
+                PlayBuffEffect(caster.owner.transform.position, IsBuff: true);
+            }
         }
 
         if(effect.targetChanges != null) 
@@ -914,6 +970,12 @@ public class BattleManager : MonoBehaviour
             {
                 ApplyStatChange(target, change);
             }
+            if (effect.selfChanges.Any(change => change.statType < StatType.HP))
+            {
+                PlayBuffEffect(caster.owner.transform.position, IsBuff: false);
+            }
+            /// 余裕があれば各デバフごとにエフェクトを用意
+            
         }
     }
 
@@ -988,83 +1050,6 @@ public class BattleManager : MonoBehaviour
     {
         TakeDamage(monster, 50);
     }
-
-    //public async UniTask AutoBattleAsync(int battleCount)
-    //{
-    //    cardStats.Clear();
-
-    //    for (int i = 0; i < battleCount; i++)
-    //    {
-    //        Debug.Log($"--- Auto Battle {i + 1} ---");
-
-    //        // モンスターを初期化
-    //        InitBattle();
-
-    //        // 戦闘実行
-    //        BattleResultType result = await StartBattleAsync();
-
-    //        // 使われたカードを記録
-    //        RecordBattleResult(playerMonsters, result == BattleResultType.PlayerWin);
-    //        RecordBattleResult(cpuMonsters, result == BattleResultType.CpuWin);
-    //    }
-
-    //    // 最後に CSV を保存
-    //    SaveBattleStatsToCSV();
-    //}
-
-    //private void RecordBattleResult(List<MonsterStatus> monsters, bool isWinner)
-    //{
-    //    foreach (var m in monsters)
-    //    {
-    //        if (m == null || m.Monster == null) continue;
-
-    //        MonsterCard card = m.Monster;
-
-    //        if (!cardStats.ContainsKey(card))
-    //        {
-    //            cardStats[card] = new CardBattleStats()
-    //            {
-    //                card = card,
-    //                winCount = 0,
-    //                loseCount = 0,
-    //                drawCount = 0
-    //            };
-    //        }
-
-    //        if (isWinner) cardStats[card].winCount++;
-    //        else cardStats[card].loseCount++;
-    //    }
-    //}
-
-    //private void SaveBattleStatsToCSV()
-    //{
-    //    string path = Path.Combine(Application.dataPath, "Records");
-    //    if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-
-    //    string file = Path.Combine(path, $"battle_stats_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
-
-    //    using (StreamWriter writer = new StreamWriter(file))
-    //    {
-    //        writer.WriteLine("CardName,Win,Lose,Draw,WinRate");
-
-    //        foreach (var kv in cardStats)
-    //        {
-    //            var s = kv.Value;
-    //            int total = s.winCount + s.loseCount + s.drawCount;
-    //            float winRate = total > 0 ? (float)s.winCount / total : 0;
-
-    //            writer.WriteLine($"{s.card.CardName},{s.winCount},{s.loseCount},{s.drawCount},{winRate:F2}");
-    //        }
-    //    }
-
-    //    Debug.Log($"CSV Saved: {file}");
-    //}
-
-    //public void OnClickRunAutoBattle()
-    //{
-    //    int count = 1000; // 任意
-    //    AutoBattleAsync(count).Forget();
-    //}
 
 }
 

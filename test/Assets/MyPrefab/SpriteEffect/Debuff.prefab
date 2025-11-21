@@ -110,6 +110,6 @@ MonoBehaviour:
   - {fileID: 549902090, guid: 0f3fb7315eccbf14180146e9f71bb9ca, type: 3}
   - {fileID: 227181280, guid: 0f3fb7315eccbf14180146e9f71bb9ca, type: 3}
   frameTime: 0.05
-  playMode: 2
+  playMode: 1
   customLoopCount: 2
   customPlayTime: 1
