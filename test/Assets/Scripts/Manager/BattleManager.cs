@@ -36,9 +36,12 @@ public class BattleManager : MonoBehaviour
     private List<GameObject> playerMonsterCards = new();
     private List<GameObject> cpuMonsterCards = new();
 
-    // BattleManager.cs
     private List<MonsterStatus> pendingPlayerAdditions = new List<MonsterStatus>();
     private List<MonsterStatus> pendingCpuAdditions = new List<MonsterStatus>();
+
+    [SerializeField] private GameObject BuffEffect;
+    [SerializeField] private GameObject DebuffEffect;
+    [SerializeField] private GameObject HealEffect;
 
     private BattleState currentState = BattleState.Initialize;
     public  BattleState CurrentState => currentState;

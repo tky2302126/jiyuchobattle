@@ -688,7 +688,7 @@ GameObject:
   - component: {fileID: 78825204323523358}
   m_Layer: 0
   m_Name: MonsterCard
-  m_TagString: Card
+  m_TagString: FixedCard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
