@@ -6,6 +6,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using static UnityEngine.GraphicsBuffer;
 using UnityEngine.UI;
+using TMPro;
 
 
 /// <summary>
@@ -42,6 +43,7 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private GameObject BuffEffect;
     [SerializeField] private GameObject DebuffEffect;
     [SerializeField] private GameObject HealEffect;
+    [SerializeField] private TextMeshProUGUI todoText;
 
     private BattleState currentState = BattleState.Initialize;
     public  BattleState CurrentState => currentState;
@@ -127,6 +129,7 @@ public class BattleManager : MonoBehaviour
     private async UniTask InitializeAsync()
     {
         currentState = BattleState.Initialize;
+        UpdateTodoText();
         Debug.Log("バトル初期化開始");
 
         // プレイヤーとCPUにカードを配布
@@ -135,6 +138,7 @@ public class BattleManager : MonoBehaviour
 
         currentState = BattleState.WaitingForReady;
         Debug.Log("配布完了。各陣営のモンスター生成を待機中...");
+        UpdateTodoText();
     }
 
     /// <summary>
@@ -179,6 +183,7 @@ public class BattleManager : MonoBehaviour
 
         Debug.Log(" バトル開始！");
         currentState = BattleState.InBattle;
+        UpdateTodoText();
         isBattleRunning = true;
 
         await BattleLoopAsync();
@@ -246,13 +251,9 @@ public class BattleManager : MonoBehaviour
                 status.ElapsedTime += tickInterval;
                 if (status.ElapsedTime >= status.Monster.AttackInterval)
                 {
-                    // var target = GetRandomAlive(cpuStatuses);
-                    // if (target != null)
-                        PerformAttack(status, cpuStatuses, isPlayer: true);
+                    PerformAttack(status, cpuStatuses, isPlayer: true);
 
                     status.ElapsedTime = 0f; // 攻撃後にリセット
-
-
                 }
             }
 
@@ -264,9 +265,7 @@ public class BattleManager : MonoBehaviour
                 status.ElapsedTime += tickInterval;
                 if (status.ElapsedTime >= status.Monster.AttackInterval)
                 {
-                   // var target = GetRandomAlive(playerStatuses);
-                   // if (target != null)
-                        PerformAttack(status, playerStatuses, isPlayer: false);
+                    PerformAttack(status, playerStatuses, isPlayer: false);
 
                     status.ElapsedTime = 0f;
                 }
@@ -297,6 +296,7 @@ public class BattleManager : MonoBehaviour
         {
             isBattleRunning = false;
             currentState = BattleState.BattleEnd;
+            UpdateTodoText();
             return true;
         }
 
@@ -385,6 +385,7 @@ public class BattleManager : MonoBehaviour
         await DealCardAsync();
 
         currentState = BattleState.WaitingForReady;
+        UpdateTodoText();
         Debug.Log("配布完了。各陣営のモンスター生成を待機中...");
     }
 
@@ -545,7 +546,7 @@ public class BattleManager : MonoBehaviour
                 if (attacker.Condition.HasFlag(MonsterCondition.Strike))
                 {
                     Debug.Log($"{attacker.Monster.CardName}の必中効果発動！");
-                    attacker.Condition &= MonsterCondition.Strike;
+                    attacker.Condition &= ~MonsterCondition.Strike;
                 }
                 else if (Random.value < crrTarget.Monster.Evasion)
                 {
@@ -567,6 +568,14 @@ public class BattleManager : MonoBehaviour
                 if (target.CurrentHP <= 0)
                 {
                     Debug.Log($"{target.Monster.CardName} は倒れた！");
+                    bool playerAllDead = playerStatuses.TrueForAll(states => states.CurrentHP <= 0);
+                    bool cpuAllDead = cpuStatuses.TrueForAll(states => states.CurrentHP <= 0);
+
+                    if (playerAllDead || cpuAllDead) 
+                    {
+                        PlayLastBlowSlowMotion().Forget();
+                    }
+                    SetCardColorGray(target.owner);
                 }
             }
 
@@ -579,8 +588,38 @@ public class BattleManager : MonoBehaviour
         UpdateCondition(attacker);
     }
 
+    private async UniTask PlayLastBlowSlowMotion()
+    {
+        Time.timeScale = 0.2f;
+        await UniTask.Delay(700, ignoreTimeScale: true);
+        Time.timeScale = 1f;
+    }
 
-    // 状態異常で攻撃できるかの判定
+    private void SetCardColorGray(GameObject card) 
+    {
+        var renderers = card.GetComponentsInChildren<SpriteRenderer>();
+        if(renderers != null) 
+        {
+            foreach (var r in renderers)
+            {
+                Color c = r.color;
+
+                // RGB → HSV に変換
+                Color.RGBToHSV(c, out float h, out float s, out float v);
+
+                // 彩度0
+                s = 0f;
+
+                // HSV → RGB
+                Color gray = Color.HSVToRGB(h, s, v);
+
+                // 反映
+                r.color = gray;
+            }
+        }
+    }
+
+    // 攻撃できるかの判定
     private bool CheckCanAttack(MonsterStatus monster, bool isPlayer) 
     {
         // 増殖
@@ -633,7 +672,7 @@ public class BattleManager : MonoBehaviour
 
         
         // ① オブジェクトを複製
-        GameObject obj = Instantiate(monster.owner, monster.owner.transform.position, Quaternion.identity);
+        GameObject obj = Instantiate(monster.owner, Vector3.zero, Quaternion.identity);
 
         // ② CardPresenter を取得・設定
         if (!obj.TryGetComponent(out CardPresenter cardPresenter))
@@ -972,7 +1011,7 @@ public class BattleManager : MonoBehaviour
             }
             if (effect.selfChanges.Any(change => change.statType < StatType.HP))
             {
-                PlayBuffEffect(caster.owner.transform.position, IsBuff: false);
+                PlayBuffEffect(target.owner.transform.position, IsBuff: false);
             }
             /// 余裕があれば各デバフごとにエフェクトを用意
             
@@ -1048,9 +1087,30 @@ public class BattleManager : MonoBehaviour
 
     private void ApplySlipDamage(MonsterStatus monster) 
     {
-        TakeDamage(monster, 50);
+        TakeDamage(monster, 10);
     }
 
+    private void UpdateTodoText() 
+    {
+        switch (currentState) 
+        {
+            case BattleState.Initialize:
+                todoText.text = "準備中";
+                break;
+
+            case BattleState.WaitingForReady:
+                todoText.text = "手札を場に出して、準備ができたらボタンを押す";
+                break;
+
+            case BattleState.InBattle:
+                todoText.text = "";
+                break;
+
+            case BattleState.BattleEnd:
+                todoText.text = "戦闘終了の処理中";
+                break;
+        }
+    }
 }
 
 [System.Serializable]
@@ -1090,6 +1150,8 @@ public class BattleRecord
         }
     }
 }
+
+    
 
 public enum BattleResultType
 {
