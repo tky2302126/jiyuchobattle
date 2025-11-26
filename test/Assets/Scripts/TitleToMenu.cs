@@ -1,4 +1,5 @@
-﻿using DG.Tweening;
+﻿using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,7 +23,11 @@ public class TitleToMenu : MonoBehaviour
 
     async void Start()
     {
-        await FadeManager.Instance.FadeIn();
+        if (FadeManager.Instance != null)
+        {
+            // 自分の破棄時に自動キャンセルされるようにする
+            await FadeManager.Instance.FadeIn(2,cancellationToken: this.GetCancellationTokenOnDestroy());
+        }
         // 初期状態：タイトル用カメラ位置とUI
         mainCamera.transform.position = titleCameraPos.position;
         mainCamera.transform.rotation = titleCameraPos.rotation;
@@ -42,8 +47,8 @@ public class TitleToMenu : MonoBehaviour
 
     private void MoveCameraToMenu()
     {
+        if (isTransitioning) return;
         isTransitioning = true;
-
         // タイトルUI非表示
         titlePromptText.SetActive(false);
 
@@ -64,11 +69,7 @@ public class TitleToMenu : MonoBehaviour
                  });
 
         // 最終位置調整
-        mainCamera.transform.position = menuCameraPos.position;
-        mainCamera.transform.rotation = menuCameraPos.rotation;
-
-        // メニューUI表示
-        menuUI.SetActive(true);
-        isTransitioning = false;
+        // mainCamera.transform.position = menuCameraPos.position;
+        // mainCamera.transform.rotation = menuCameraPos.rotation;
     }
 }
