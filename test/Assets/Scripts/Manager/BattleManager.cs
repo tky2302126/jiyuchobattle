@@ -44,6 +44,7 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private GameObject DebuffEffect;
     [SerializeField] private GameObject HealEffect;
     [SerializeField] private TextMeshProUGUI todoText;
+    [SerializeField] private CameraMover cameraMover;
 
     private BattleState currentState = BattleState.Initialize;
     public  BattleState CurrentState => currentState;
@@ -121,6 +122,7 @@ public class BattleManager : MonoBehaviour
     private void Start()
     {
         InitializeAsync().Forget();
+        cameraMover.MoveCameraToSetupAsync(5f).Forget();
     }
 
     /// <summary>
@@ -148,13 +150,13 @@ public class BattleManager : MonoBehaviour
     {
         // 両方のモンスターが準備完了したらバトル開始
 
-
         if (playerMonsters.Count == 0 || cpuMonsters.Count == 0)
         {
             Debug.LogWarning(" モンスターが生成されていません。");
             return;
         }
 
+        cameraMover.MoveCameraToInBattleAsync(1.5f).Forget();
         // MonsterCard → MonsterStatus に変換
         playerStatuses.Clear();
         foreach(var card in playerMonsterCards) 
@@ -192,23 +194,7 @@ public class BattleManager : MonoBehaviour
     private async UniTask PlayBattleStartCutInAsync()
     {
         // テキストアニメーションを再生
-
-        // ③カメラズームアウト（任意）
-        var cam = Camera.main;
-        if (cam != null)
-        {
-            float startSize = cam.orthographicSize;
-            float targetSize = startSize + 1.5f;
-            float t = 0f;
-
-            while (t < 1f)
-            {
-                t += Time.deltaTime * 1.2f;
-                cam.orthographicSize = Mathf.Lerp(startSize, targetSize, t);
-                await UniTask.Yield();
-            }
-        }
-
+        await UniTask.Delay(2000);
         Debug.Log("戦闘開始演出完了");
     }
 
@@ -381,6 +367,7 @@ public class BattleManager : MonoBehaviour
         }
         Debug.Log("次のラウンド準備中...");
         battleElapsedTime = 0;
+        cameraMover.MoveCameraToSetupAsync(1.5f).Forget();
         await UniTask.Delay(2000);
         await DealCardAsync();
 
