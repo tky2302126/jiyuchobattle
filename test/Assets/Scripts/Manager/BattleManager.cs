@@ -360,6 +360,8 @@ public class BattleManager : MonoBehaviour
             Debug.Log("ラウンドが規定数に到達したので、終了します…");
             /// 戦闘結果をマネージャークラスに伝達
             SendResult();
+            await UniTask.Delay(2000);
+            await FadeManager.Instance.FadeOut();
             /// シーン遷移
             var sceneManager = FindObjectOfType<MySceneManager.MySceneManager>();
             sceneManager?.LoadResult();

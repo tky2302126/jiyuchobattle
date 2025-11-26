@@ -32,8 +32,9 @@ public class ResultSceneController : MonoBehaviour
 
     public enum BattleResult { Win, Lose, Draw }
 
-    private void Start()
+    private async void Start()
     {
+        await FadeManager.Instance.FadeIn();
         var brm = FindObjectOfType<BattleResultManager>();
         var record = brm.Record;
         PlayResultSequenceAsync(record).Forget();
@@ -67,7 +68,7 @@ public class ResultSceneController : MonoBehaviour
         await UniTask.Delay(3000);
 
         // 6️⃣ フェードアウト（次のラウンド or メニューへ）
-        // await FadeOutAsync();
+        await ShowMenuAsync();
 
         isPlaying = false;
     }
@@ -169,17 +170,9 @@ private async UniTask ShowUsedCardsAsync(BattleRecord record)
         await resultText.transform.DOScale(1.2f, 0.5f).SetLoops(2, LoopType.Yoyo).AsyncWaitForCompletion();
     }
 
-    // ----------------------------------------------------------
-    // ✴ フェード演出
-    // ----------------------------------------------------------
-    private async UniTask FadeInAsync()
-    {
-        canvasGroup.alpha = 0;
-        await canvasGroup.DOFade(1f, 1f).SetEase(Ease.InOutQuad).AsyncWaitForCompletion();
-    }
 
-    private async UniTask FadeOutAsync()
+    private async UniTask ShowMenuAsync()
     {
-        await canvasGroup.DOFade(0f, 1f).SetEase(Ease.InOutQuad).AsyncWaitForCompletion();
+        await UniTask.Delay(1);
     }
 }

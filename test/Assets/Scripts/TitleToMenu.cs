@@ -20,8 +20,9 @@ public class TitleToMenu : MonoBehaviour
     private bool isTransitioning = false;
     private Vector2 logoStartPosition;
 
-    void Start()
+    async void Start()
     {
+        await FadeManager.Instance.FadeIn();
         // 初期状態：タイトル用カメラ位置とUI
         mainCamera.transform.position = titleCameraPos.position;
         mainCamera.transform.rotation = titleCameraPos.rotation;

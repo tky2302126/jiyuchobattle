@@ -41,8 +41,9 @@ public class TextHoverColor : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     }
 
     // クリック時
-    public void OnPointerClick(PointerEventData eventData)
+    public async void OnPointerClick(PointerEventData eventData)
     {
+        await FadeManager.Instance.FadeOut();
         cachedSceneManager.LoadMain();
     }
 }
