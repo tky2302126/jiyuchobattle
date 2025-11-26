@@ -20,7 +20,7 @@ public class BattleLogManager : MonoBehaviour
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI logText;
     [SerializeField] private int maxLogCount = 100;
-    [SerializeField] private ScrollRect scrollRect; // ← 追加
+    [SerializeField] private ScrollRect scrollRect;
 
     [Header("設定")]
     public LogLevel currentLogLevel = LogLevel.All;
