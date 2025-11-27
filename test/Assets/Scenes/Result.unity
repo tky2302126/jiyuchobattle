@@ -1112,7 +1112,8 @@ MonoBehaviour:
   cardPrefab: {fileID: 7984693389294789981, guid: cb32dccfeb30bd74aa81cf7c9f79745c,
     type: 3}
   resultText: {fileID: 535441285}
-  winEffect: {fileID: 0}
+  winEffect: {fileID: 4410847068598735423, guid: 36cbc3c5806378647ba8cdec487451f7,
+    type: 3}
   loseEffect: {fileID: 0}
   drawEffect: {fileID: 0}
   canvasGroup: {fileID: 569641026}
