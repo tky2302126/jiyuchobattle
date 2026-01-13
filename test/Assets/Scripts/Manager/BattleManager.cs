@@ -58,6 +58,7 @@ public class BattleManager : MonoBehaviour
 
     private float battleElapsedTime = 0f;   // 戦闘経過時間
     [SerializeField] private float slipDamageInterval = 10f; // スリップダメージ発動間隔（秒）
+    [SerializeField] private BattleStartText BattleStartText;
 
     private class MonsterStatus
     {
@@ -194,6 +195,25 @@ public class BattleManager : MonoBehaviour
     private async UniTask PlayBattleStartCutInAsync()
     {
         // テキストアニメーションを再生
+        if(playerStatuses?.Count > 0) 
+        {
+            var playerMonaster = playerStatuses[0];
+            // 名前取得
+            var name = playerMonaster.Monster.CardName;
+            // テキストブロックに反映
+            BattleStartText?.SetPlayerMonsterName(name);
+        }
+
+        if(cpuStatuses?.Count > 0) 
+        {
+            var cpuMonster = cpuStatuses[0];
+            var name = cpuMonster.Monster.CardName;
+            BattleStartText?.SetCPUMonsterName(name);
+        }
+
+        BattleStartText?.StartCutIn();
+
+        // オブジェクトをフェードアウト
         await UniTask.Delay(2000);
         Debug.Log("戦闘開始演出完了");
     }
