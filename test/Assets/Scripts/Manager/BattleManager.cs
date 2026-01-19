@@ -451,6 +451,11 @@ public class BattleManager : MonoBehaviour
         return cardObj;
     }
 
+    private void AddBattleLog(string message) 
+    {
+        BattleLogManager.Instance?.AddLog(message);
+    }
+
     /// <summary>
     /// 攻撃処理（即時実行）
     /// </summary>
@@ -489,7 +494,7 @@ public class BattleManager : MonoBehaviour
         if (Attacker.Skills != null && Attacker.Skills.Count > 0)
         {
             selectedCommand = Attacker.Skills[Random.Range(0, Attacker.Skills.Count)];
-            Debug.Log($"{Attacker.CardName} が {selectedCommand.CommandName} を使用！");
+            AddBattleLog($"{Attacker.CardName} が {selectedCommand.CommandName} を使用！");
         }
 
         if (selectedCommand == null)
@@ -554,12 +559,12 @@ public class BattleManager : MonoBehaviour
                 // 回避判定
                 if (attacker.Condition.HasFlag(MonsterCondition.Strike))
                 {
-                    Debug.Log($"{attacker.Monster.CardName}の必中効果発動！");
+                    AddBattleLog($"{attacker.Monster.CardName}の必中効果発動！");
                     attacker.Condition &= ~MonsterCondition.Strike;
                 }
                 else if (Random.value < crrTarget.Monster.Evasion)
                 {
-                    Debug.Log($"{target.Monster.CardName} が {selectedCommand.CommandName} を回避！");
+                    AddBattleLog($"{target.Monster.CardName} が {selectedCommand.CommandName} を回避！");
                     continue;
                 }
 
@@ -576,7 +581,7 @@ public class BattleManager : MonoBehaviour
                 // HP0チェック
                 if (target.CurrentHP <= 0)
                 {
-                    Debug.Log($"{target.Monster.CardName} は倒れた！");
+                    AddBattleLog($"{target.Monster.CardName} は倒れた！");
                     bool playerAllDead = playerStatuses.TrueForAll(states => states.CurrentHP <= 0);
                     bool cpuAllDead = cpuStatuses.TrueForAll(states => states.CurrentHP <= 0);
 

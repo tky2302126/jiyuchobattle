@@ -24,6 +24,7 @@ namespace MySceneManager
 
         public void LoadSceneAsync(int index) 
         {
+            AudioManager.Instance.StopBGM();
             StartCoroutine(Load(index));
         }
 
@@ -31,10 +32,35 @@ namespace MySceneManager
         {
             AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(index);
 
-            while (asyncLoad.isDone) 
+            while (!asyncLoad.isDone) 
             {
                 Debug.Log("Loading progress: " + (asyncLoad.progress * 100f) + "%");
                 yield return null;
+            }
+
+            OnSceneLoaded(index);
+        }
+
+        private void OnSceneLoaded(int index)
+        {
+            switch ((SceneTag)index)
+            {
+                case SceneTag.Title:
+                    AudioManager.Instance.PlayBGM("Title");
+                    break;
+
+                case SceneTag.Main:
+                    AudioManager.Instance.PlaySE("SetUp1");
+                    AudioManager.Instance.PlaySEThenBGM("SetUp2", "BattleSetup");
+                    break;
+
+                case SceneTag.Result:
+                    // AudioManager.Instance.PlayBGM("ResultBGM");
+                    break;
+
+                case SceneTag.Sample:
+                    // AudioManager.Instance.PlayBGM("SampleBGM");
+                    break;
             }
         }
 

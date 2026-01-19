@@ -25,8 +25,9 @@ public class TitleToMenu : MonoBehaviour
     {
         if (FadeManager.Instance != null)
         {
+            // FadeManagerにはいるとUI移動と競合してエラーの原因になる
             // 自分の破棄時に自動キャンセルされるようにする
-            await FadeManager.Instance.FadeIn(2,cancellationToken: this.GetCancellationTokenOnDestroy());
+            // await FadeManager.Instance.FadeIn(2,cancellationToken: this.GetCancellationTokenOnDestroy());
         }
         // 初期状態：タイトル用カメラ位置とUI
         mainCamera.transform.position = titleCameraPos.position;
@@ -55,18 +56,34 @@ public class TitleToMenu : MonoBehaviour
         Vector3 startPos = mainCamera.transform.position;
         Quaternion startRot = mainCamera.transform.rotation;
 
-        // カメラ移動
-        mainCamera.transform.DOMove(menuCameraPos.position, cameraMoveDuration).SetEase(Ease.InOutSine);
-        mainCamera.transform.DORotateQuaternion(menuCameraPos.rotation, cameraMoveDuration).SetEase(Ease.InOutSine);
+        //  // カメラ移動
+        //  mainCamera.transform.DOMove(menuCameraPos.position, cameraMoveDuration).SetEase(Ease.InOutSine);
+        //  mainCamera.transform.DORotateQuaternion(menuCameraPos.rotation, cameraMoveDuration).SetEase(Ease.InOutSine);
+        // 
+        //  // タイトルロゴ移動
+        //  titleLogo.DOAnchorPos(logoTargetPosition, cameraMoveDuration).SetEase(Ease.OutCubic)
+        //           .OnComplete(() =>
+        //           {
+        //               // アニメ完了後にメニューUI表示
+        //               menuUI.SetActive(true);
+        //               isTransitioning = false;
+        //               this.enabled = false;
+        //           });
 
-        // タイトルロゴ移動
-        titleLogo.DOAnchorPos(logoTargetPosition, cameraMoveDuration).SetEase(Ease.OutCubic)
-                 .OnComplete(() =>
-                 {
-                     // アニメ完了後にメニューUI表示
-                     menuUI.SetActive(true);
-                     isTransitioning = false;
-                 });
+        mainCamera.transform.DOKill();
+        titleLogo.DOKill();
+
+        Sequence seq = DOTween.Sequence();
+        seq.Join(mainCamera.transform.DOMove(menuCameraPos.position, cameraMoveDuration));
+        seq.Join(mainCamera.transform.DORotateQuaternion(menuCameraPos.rotation, cameraMoveDuration));
+        seq.Join(titleLogo.DOAnchorPos(logoTargetPosition, cameraMoveDuration));
+
+        seq.OnComplete(() =>
+        {
+            menuUI.SetActive(true);
+            isTransitioning = false;
+            this.enabled = false;
+        });
 
         // 最終位置調整
         // mainCamera.transform.position = menuCameraPos.position;
