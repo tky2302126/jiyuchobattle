@@ -194,6 +194,8 @@ public class BattleManager : MonoBehaviour
 
     private async UniTask PlayBattleStartCutInAsync()
     {
+        // SE
+        AudioManager.Instance.PlaySE("VS");
         // テキストアニメーションを再生
         if(playerStatuses?.Count > 0) 
         {
@@ -231,6 +233,7 @@ public class BattleManager : MonoBehaviour
     private async UniTask BattleLoopAsync()
     {
         Debug.Log("戦闘ループを開始します");
+        AudioManager.Instance.PlayBGM("InBattle");
         while (isBattleRunning)
         {
             // 経過時間更新
@@ -510,6 +513,7 @@ public class BattleManager : MonoBehaviour
             if(effect != null) 
             {
                 ApplyEffect(attacker, attacker, effect);
+                AudioManager.Instance.PlaySE("Buff");
             }
         }
         else 
@@ -549,6 +553,9 @@ public class BattleManager : MonoBehaviour
             // --- エフェクト再生---
             PlayAttackEffect(attacker, chosenTargets);
 
+            // SE再生
+            AudioManager.Instance.PlayRandomAttackSE();
+
             // 3. コマンドを対象に実行
 
             // stateChangeを含めたMonsterStatusを作成
@@ -587,6 +594,7 @@ public class BattleManager : MonoBehaviour
 
                     if (playerAllDead || cpuAllDead) 
                     {
+                        AudioManager.Instance.PlaySE("K.O.");
                         PlayLastBlowSlowMotion().Forget();
                     }
                     SetCardColorGray(target.owner);

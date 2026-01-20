@@ -1,4 +1,5 @@
 ﻿using MySceneManager;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -137,5 +138,30 @@ public class AudioManager : MonoBehaviour
                 break;
         }
 
+    }
+
+    // 特定のワードを含むものに限定して再生できる
+    public void PlayRandomAttackSE(string containsKey = "Attack")
+    {
+        // 条件に合う SE を抽出
+        List<AudioClip> candidates = new List<AudioClip>();
+
+        foreach (var pair in seDict)
+        {
+            if (pair.Key.Contains(containsKey))
+            {
+                candidates.Add(pair.Value);
+            }
+        }
+
+        if (candidates.Count == 0)
+        {
+            Debug.LogWarning($"Random SE not found. keyword = {containsKey}");
+            return;
+        }
+
+        // ランダム再生
+        var clip = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+        seSource.PlayOneShot(clip);
     }
 }
