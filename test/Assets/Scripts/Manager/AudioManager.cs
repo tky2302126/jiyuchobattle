@@ -23,6 +23,9 @@ public class AudioManager : MonoBehaviour
     private Dictionary<string, AudioClip> bgmDict;
     private Dictionary<string, AudioClip> seDict;
 
+    private Coroutine randomSeCoroutine;
+    private bool isRandomSePlaying = false;
+
     private void Awake()
     {
         if (Instance != null)
@@ -79,6 +82,10 @@ public class AudioManager : MonoBehaviour
         bgmSource.Stop();
     }
 
+    public void StopSE() 
+    {
+        seSource.Stop();
+    }
     public void SetBGMVolume(float volume)
     {
         bgmSource.volume = Mathf.Clamp01(volume);
@@ -141,7 +148,7 @@ public class AudioManager : MonoBehaviour
     }
 
     // 特定のワードを含むものに限定して再生できる
-    public void PlayRandomAttackSE(string containsKey = "Attack")
+    public void PlayRandomKeySE(string containsKey = "Attack")
     {
         // 条件に合う SE を抽出
         List<AudioClip> candidates = new List<AudioClip>();
@@ -163,5 +170,56 @@ public class AudioManager : MonoBehaviour
         // ランダム再生
         var clip = candidates[UnityEngine.Random.Range(0, candidates.Count)];
         seSource.PlayOneShot(clip);
+    }
+
+    public void StartRandomSEinCategory(string containsKey = "CardCreate", float interval = 0f)
+    {
+        if (isRandomSePlaying) return;
+
+        isRandomSePlaying = true;
+        randomSeCoroutine = StartCoroutine(RandomCategorySELoop(containsKey, interval));
+    }
+
+    public void StopRandomSEinCategory()
+    {
+        if (!isRandomSePlaying) return;
+
+        isRandomSePlaying = false;
+
+        if (randomSeCoroutine != null)
+        {
+            StopCoroutine(randomSeCoroutine);
+            randomSeCoroutine = null;
+        }
+    }
+
+    private IEnumerator RandomCategorySELoop(string containsKey, float interval)
+    {
+        // 候補を最初に確定
+        List<AudioClip> candidates = new List<AudioClip>();
+
+        foreach (var pair in seDict)
+        {
+            if (pair.Key.Contains(containsKey))
+            {
+                candidates.Add(pair.Value);
+            }
+        }
+
+        if (candidates.Count == 0)
+        {
+            Debug.LogWarning($"Random SE not found. keyword = {containsKey}");
+            isRandomSePlaying = false;
+            yield break;
+        }
+
+        while (isRandomSePlaying)
+        {
+            var clip = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+            seSource.PlayOneShot(clip);
+
+            // クリップの長さ + 任意の間隔待つ
+            yield return new WaitForSeconds(clip.length + interval);
+        }
     }
 }

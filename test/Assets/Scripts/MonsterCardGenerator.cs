@@ -87,6 +87,9 @@ public class MonsterCardGenerator : MonoBehaviour
         // --- 光エフェクト ---
          var fusionTask =  PlayFusionEffect(spawnPoint.position);
 
+        // SE
+        AudioManager.Instance.PlaySE("CardFusion");
+
         // --- モンスターカードクラス生成---
         var monsterCard = CombineCards(fieldCards);
         
@@ -444,6 +447,7 @@ public class MonsterCardGenerator : MonoBehaviour
 
         GameObject newCard = Instantiate(cardPrefab, spawnPoint.position + startOffset, startRot);
 
+        AudioManager.Instance.StartRandomSEinCategory();
         float duration = 0.5f;
         await newCard.transform.DOMove(spawnPoint.position, duration).SetEase(Ease.OutQuad).AsyncWaitForCompletion();
 

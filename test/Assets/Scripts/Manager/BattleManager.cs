@@ -397,6 +397,7 @@ public class BattleManager : MonoBehaviour
         await DealCardAsync();
 
         currentState = BattleState.WaitingForReady;
+        AudioManager.Instance.PlayBGM("BattleSetup");
         UpdateTodoText();
         Debug.Log("配布完了。各陣営のモンスター生成を待機中...");
     }
@@ -554,7 +555,7 @@ public class BattleManager : MonoBehaviour
             PlayAttackEffect(attacker, chosenTargets);
 
             // SE再生
-            AudioManager.Instance.PlayRandomAttackSE();
+            AudioManager.Instance.PlayRandomKeySE();
 
             // 3. コマンドを対象に実行
 
@@ -1023,6 +1024,8 @@ public class BattleManager : MonoBehaviour
             {
                 PlayBuffEffect(caster.owner.transform.position, IsBuff: true);
             }
+
+            AudioManager.Instance.PlaySE("Buff");
         }
 
         if(effect.targetChanges != null) 
@@ -1035,8 +1038,10 @@ public class BattleManager : MonoBehaviour
             {
                 PlayBuffEffect(target.owner.transform.position, IsBuff: false);
             }
+
+            AudioManager.Instance.PlaySE("Debuff");
             /// 余裕があれば各デバフごとにエフェクトを用意
-            
+
         }
     }
 

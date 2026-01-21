@@ -65,6 +65,8 @@ public class ReadyButton : MonoBehaviour
 
         await UniTask.WaitUntil(() => CPU.IsReady);
 
+        AudioManager.Instance.StopRandomSEinCategory();
+
         BattleManager.Instance.TryStartBattleAsync().Forget();
     }
 
