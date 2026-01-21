@@ -92,6 +92,9 @@ public class CPUController : MonoBehaviour, IBattleParticipant
             CardDataBase selectedCard = sourceList[index];
 
             GameObject cardObj = Instantiate(cardPrefab, cpuHandSlot.position, Quaternion.identity);
+
+            cardObj.tag = "EnemyCard";
+            
             CardPresenter presenter = cardObj.AddComponent<CardPresenter>();
             presenter.cardData = selectedCard;
 

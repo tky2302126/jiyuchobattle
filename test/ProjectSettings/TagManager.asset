@@ -8,6 +8,7 @@ TagManager:
   - Hand
   - Card
   - FixedCard
+  - EnemyCard
   layers:
   - Default
   - TransparentFX
