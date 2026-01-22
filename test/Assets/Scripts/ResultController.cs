@@ -27,6 +27,8 @@ public class ResultSceneController : MonoBehaviour
     [SerializeField] private float cameraMoveDuration = 2f;
     [SerializeField] private float cardShowDelay = 0.15f;
 
+    [SerializeField] private GameObject starEffect;
+
     // 内部状態
     private bool isPlaying = false;
 
@@ -98,10 +100,10 @@ public class ResultSceneController : MonoBehaviour
         await mainCamera.transform.DOMove(targetPos, cameraMoveDuration).SetEase(Ease.InOutQuad).AsyncWaitForCompletion();
     }
 
-// ----------------------------------------------------------
-// ✴ 使用カードの表示
-// ----------------------------------------------------------
-private async UniTask ShowUsedCardsAsync(BattleRecord record)
+    // ----------------------------------------------------------
+    // ✴ 使用カードの表示
+    // ----------------------------------------------------------
+    private async UniTask ShowUsedCardsAsync(BattleRecord record)
     {
         foreach (Transform child in playerCardParent) Destroy(child.gameObject);
         foreach (Transform child in cpuCardParent) Destroy(child.gameObject);
@@ -135,10 +137,56 @@ private async UniTask ShowUsedCardsAsync(BattleRecord record)
             await cpuObj.transform.DOScale(1f, 0.3f).SetEase(Ease.OutBack).AsyncWaitForCompletion();
             await UniTask.Delay((int)(cardShowDelay * 1000));
 
+            AudioManager.Instance.PlaySE("Impact");
+
+            // ===== 勝敗に応じた演出 =====
+            switch (round.result)
+            {
+                case BattleResultType.PlayerWin:
+                    await PlayWinnerEffectAsync(playerObj.transform);
+                    PlayLoserEffect(cpuObj.transform);
+                    break;
+
+                case BattleResultType.CpuWin:
+                    await PlayWinnerEffectAsync(cpuObj.transform);
+                    PlayLoserEffect(playerObj.transform);
+                    break;
+
+                case BattleResultType.Draw:
+                    // 引き分け → 両方軽く強調するなども可
+                    break;
+            }
+
             offset -= spacing;
+
+            
         }
     }
 
+    private async UniTask PlayWinnerEffectAsync(Transform card)
+    {
+        Vector3 offset = new Vector3(0, 0, 0.12f);
+        var obj = Instantiate
+            (starEffect,
+            card,
+            false);
+
+        obj.transform.localPosition = offset;
+        obj.transform.localRotation = Quaternion.identity;
+        obj.transform.localScale = Vector3.one;
+        var seq = DOTween.Sequence();
+
+        seq.Append(card.DOPunchScale(Vector3.one * 0.18f, 0.4f, 10, 0.9f));
+        seq.Join(card.DOLocalMoveY(card.localPosition.y + 0.25f, 0.25f)
+                      .SetLoops(2, LoopType.Yoyo));
+
+        await seq.AsyncWaitForCompletion();
+        
+    }
+    private void PlayLoserEffect(Transform card)
+    {
+        card.DOScale(0.9f, 0.2f);
+    }
     // ----------------------------------------------------------
     // ✴ 勝敗表示
     // ----------------------------------------------------------
@@ -153,6 +201,7 @@ private async UniTask ShowUsedCardsAsync(BattleRecord record)
                 resultText.text = "WIN";
                 resultText.color = Color.cyan;
                 winEffect?.Play();
+                AudioManager.Instance.PlaySE("Win");
                 break;
             case BattleResult.Lose:
                 resultText.text = "LOSE";
@@ -165,6 +214,8 @@ private async UniTask ShowUsedCardsAsync(BattleRecord record)
                 drawEffect?.Play();
                 break;
         }
+
+        AudioManager.Instance.PlayBGM("Result");
 
         await resultText.DOFade(1f, 1f).SetEase(Ease.OutQuad).AsyncWaitForCompletion();
         await resultText.transform.DOScale(1.2f, 0.5f).SetLoops(2, LoopType.Yoyo).AsyncWaitForCompletion();

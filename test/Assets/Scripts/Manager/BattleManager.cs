@@ -1178,8 +1178,6 @@ public class BattleRecord
     }
 }
 
-    
-
 public enum BattleResultType
 {
     Unknown,

@@ -43,7 +43,7 @@ public class ReadyButton : MonoBehaviour
         if (BattleManager.Instance.CurrentState != BattleManager.BattleState.WaitingForReady) return;
         var playerCanCreate = cardGenerator.IsPlayerCreateMonster(dragmanager.CardsInFieldSlot);
         if (!playerCanCreate) return;
-
+        AudioManager.Instance.PlaySE("GetReady");
         CPU.SetCardAndGenerateCardAsync().Forget(); // 仮置き
         var monsterCardObj = await cardGenerator.CreateMonsterCardAsync(
             dragmanager.CardsInFieldSlot,
