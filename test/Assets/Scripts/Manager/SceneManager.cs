@@ -1,13 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
+using Cysharp.Threading.Tasks;
+using System.Threading;
+
 namespace MySceneManager
 {
-    /// <summary>
-    /// ビルド設定順に設定
-    /// </summary>
-    enum SceneTag :int
+    enum SceneTag : int
     {
         Title,
         Main,
@@ -17,28 +15,46 @@ namespace MySceneManager
 
     public class MySceneManager : MonoBehaviour
     {
-        public void LoadSceneByIndex(int index) 
+        private CancellationTokenSource cts;
+
+        private void Awake()
         {
-            SceneManager.LoadScene(index);
+            cts = new CancellationTokenSource();
         }
 
-        public void LoadSceneAsync(int index) 
+        private void OnDestroy()
         {
-            AudioManager.Instance.StopBGM();
-            StartCoroutine(Load(index));
+            cts.Cancel();
+            cts.Dispose();
         }
 
-        private IEnumerator Load(int index) 
-        {
-            AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(index);
+        public void LoadTitle() => LoadSceneAsync((int)SceneTag.Title).Forget();
+        public void LoadMain() => LoadSceneAsync((int)SceneTag.Main).Forget();
+        public void LoadResult() => LoadSceneAsync((int)SceneTag.Result).Forget();
+        public void LoadSample() => LoadSceneAsync((int)SceneTag.Sample).Forget();
 
-            while (!asyncLoad.isDone) 
+        private async UniTask LoadSceneAsync(int index)
+        {
+            // フェードアウト
+            if (FadeManager.Instance != null)
             {
-                Debug.Log("Loading progress: " + (asyncLoad.progress * 100f) + "%");
-                yield return null;
+                await FadeManager.Instance.FadeOut(0.5f, cts.Token);
             }
 
+            // BGM停止
+            AudioManager.Instance.StopBGM();
+
+            // シーンロード
+            await SceneManager.LoadSceneAsync(index);
+
+            // シーンロード後処理
             OnSceneLoaded(index);
+
+            // フェードイン
+            if (FadeManager.Instance != null)
+            {
+                await FadeManager.Instance.FadeIn(0.5f, cts.Token);
+            }
         }
 
         private void OnSceneLoaded(int index)
@@ -55,66 +71,21 @@ namespace MySceneManager
                     break;
 
                 case SceneTag.Result:
-                    // AudioManager.Instance.PlayBGM("ResultBGM");
                     break;
 
                 case SceneTag.Sample:
-                    // AudioManager.Instance.PlayBGM("SampleBGM");
                     break;
             }
-        }
-
-        public void LoadTitle() 
-        {
-            LoadSceneAsync((int)SceneTag.Title);
-        }
-
-        public void LoadMain()
-        {
-            LoadSceneAsync((int)SceneTag.Main);
-        }
-
-        public void LoadResult()
-        {
-            LoadSceneAsync((int)SceneTag.Result);
-        }
-
-        public void LoadSample()
-        {
-            LoadSceneAsync((int)SceneTag.Sample);
         }
 
         private void Update()
         {
-            if (Input.GetKey(KeyCode.LeftControl))
-            {
-                if (Input.GetKey(KeyCode.T)) 
-                {
-                    LoadTitle();
-                }
+            if (!Input.GetKey(KeyCode.LeftControl)) return;
 
-                if (Input.GetKey(KeyCode.M))
-                {
-                    LoadMain();
-                }
-
-                if (Input.GetKey(KeyCode.R))
-                {
-                    LoadResult();
-                }
-
-                if (Input.GetKey(KeyCode.S))
-                {
-                    LoadSample();
-                }
-            }
+            if (Input.GetKeyDown(KeyCode.T)) LoadTitle();
+            if (Input.GetKeyDown(KeyCode.M)) LoadMain();
+            if (Input.GetKeyDown(KeyCode.R)) LoadResult();
+            if (Input.GetKeyDown(KeyCode.S)) LoadSample();
         }
     }
-
-
-
-
-
-
 }
-

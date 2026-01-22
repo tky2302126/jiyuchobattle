@@ -522,6 +522,16 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1289340136443809949}
     m_Modifications:
+    - target: {fileID: 1244441050020218848, guid: fde11b8ac18812240938525d11d53f41,
+        type: 3}
+      propertyPath: m_Interactable
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1244441050020218848, guid: fde11b8ac18812240938525d11d53f41,
+        type: 3}
+      propertyPath: m_BlocksRaycasts
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2563001419687818733, guid: fde11b8ac18812240938525d11d53f41,
         type: 3}
       propertyPath: m_Pivot.x
@@ -622,10 +632,20 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3383655252729301169, guid: fde11b8ac18812240938525d11d53f41,
+        type: 3}
+      propertyPath: m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5886739937979152133, guid: fde11b8ac18812240938525d11d53f41,
         type: 3}
       propertyPath: m_Name
       value: FadeCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 7316471331920454210, guid: fde11b8ac18812240938525d11d53f41,
+        type: 3}
+      propertyPath: m_SortingOrder
+      value: 99
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

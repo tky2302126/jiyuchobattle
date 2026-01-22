@@ -147,7 +147,8 @@ public class CardManager : MonoBehaviour, IBattleParticipant
             presenter.cardData = selectedCard;
 
             // アニメーション移動
-           dragManager.AddCardToHand(cardObj);
+            dragManager.AddCardToHand(cardObj);
+            AudioManager.Instance.PlaySE("DealCard");
             await UniTask.Delay(300);
         }
     }
@@ -172,12 +173,6 @@ public class CardManager : MonoBehaviour, IBattleParticipant
         }
 
         await SpawnCardsFromList(cardDataList, cardsToDeal);
-    }
-
-    public GameObject CloneCard(MonsterCard monster, GameObject obj)
-    {
-        var result = cardGenerator.CloneCard(monster, obj);
-        return null;
     }
 
     public void AddCardToField(GameObject obj) 

@@ -83,7 +83,7 @@ public class Drag3DObject : MonoBehaviour
                 // フィールドに置けない場合は手札に戻す
                 if ((isNounCard && hasNounCard) || cardsInFieldSlot.Count >= 3)
                 {
-                    Debug.Log("フィールドスロットに置けません。手札に戻します。");
+                    AddBattleLog("フィールドスロットに置けません。手札に戻します。");
                     Card.transform.position = handSlot.position;
                     if (!cardsInHandSlot.Contains(Card)) cardsInHandSlot.Add(Card);
                 }
@@ -256,5 +256,10 @@ public class Drag3DObject : MonoBehaviour
     {
         cardsInFieldSlot.Add(obj);
         UpdateCardPositions();
+    }
+
+    private void AddBattleLog(string message)
+    {
+        BattleLogManager.Instance?.AddLog(message);
     }
 }

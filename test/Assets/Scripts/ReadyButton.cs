@@ -28,7 +28,12 @@ public class ReadyButton : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (BattleManager.Instance == null) return;
+
+        bool isWaitingForReady =
+            BattleManager.Instance.CurrentState == BattleManager.BattleState.WaitingForReady;
+
+        gameObject.SetActive(isWaitingForReady);
     }
 
     public void OnClick() 
@@ -69,5 +74,4 @@ public class ReadyButton : MonoBehaviour
 
         BattleManager.Instance.TryStartBattleAsync().Forget();
     }
-
 }

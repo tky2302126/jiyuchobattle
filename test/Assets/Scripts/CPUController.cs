@@ -290,12 +290,6 @@ public class CPUController : MonoBehaviour, IBattleParticipant
 
     }
 
-    public GameObject CloneCard(MonsterCard monster, GameObject obj) 
-    {
-        var result = cardGenerator.CloneCard(monster, obj);
-        return null;
-    }
-
     public void AddCardtoField(GameObject cardObj) 
     {
         cpuCardsInFieldSlot.Add(cardObj);

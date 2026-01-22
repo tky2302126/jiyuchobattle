@@ -33,13 +33,13 @@ public class MonsterCardGenerator : MonoBehaviour
 
         if (fieldCards.Count == 0)
         {
-            Debug.LogWarning("フィールドにカードがありません。");
+            AddBattleLog("フィールドにカードがありません。");
             return false;
         }
 
         if (!hasNounCard)
         {
-            Debug.LogWarning("名詞カードが含まれていません。生成できません。");
+            AddBattleLog("名詞カードが含まれていません。生成できません。");
             return false;
         }
 
@@ -533,6 +533,11 @@ public class MonsterCardGenerator : MonoBehaviour
         await UniTask.Delay(1);
 
         return null;
+    }
+
+    private void AddBattleLog(string message)
+    {
+        BattleLogManager.Instance?.AddLog(message);
     }
 }
 
