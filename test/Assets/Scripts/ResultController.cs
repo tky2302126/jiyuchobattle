@@ -4,6 +4,7 @@ using TMPro;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using System.Collections.Generic;
+using System;
 
 public class ResultSceneController : MonoBehaviour
 {
@@ -21,9 +22,9 @@ public class ResultSceneController : MonoBehaviour
     [SerializeField] private ParticleSystem winEffect;
     [SerializeField] private ParticleSystem loseEffect;
     [SerializeField] private ParticleSystem drawEffect;
+    [SerializeField] private GameObject resultUI;
 
     [Header("Transition")]
-    [SerializeField] private CanvasGroup canvasGroup; // フェードイン・アウト用
     [SerializeField] private float cameraMoveDuration = 2f;
     [SerializeField] private float cardShowDelay = 0.15f;
 
@@ -54,23 +55,35 @@ public class ResultSceneController : MonoBehaviour
         // BattleResultをrecordから判定
         ResultSceneController.BattleResult result = DetermineBattleResult(record);
 
-        // 1️⃣ フェードイン
-        // await FadeInAsync();
+        try 
+        {
+            // 2️⃣ カメラ移動（モニターに寄る）
+            await PlayCameraTransitionAsync();
 
-        // 2️⃣ カメラ移動（モニターに寄る）
-        await PlayCameraTransitionAsync();
+            // 3️⃣ カード表示
+            await ShowUsedCardsAsync(record);
 
-        // 3️⃣ カード表示
-        await ShowUsedCardsAsync(record);
+            // 4️⃣ 勝敗表示
+            await ShowResultAsync(result);
+        }
 
-        // 4️⃣ 勝敗表示
-        await ShowResultAsync(result);
+        catch(Exception e) 
+        {
+            Debug.LogError(e);
+        }
+
+        finally 
+        {
+            await ShowMenuAsync();
+        }
+
+        
 
         // 5️⃣ 少し待ってから次へ
-        await UniTask.Delay(3000);
+        // await UniTask.Delay(300);
 
         // 6️⃣ フェードアウト（次のラウンド or メニューへ）
-        await ShowMenuAsync();
+        
 
         isPlaying = false;
     }
@@ -206,12 +219,12 @@ public class ResultSceneController : MonoBehaviour
             case BattleResult.Lose:
                 resultText.text = "LOSE";
                 resultText.color = Color.red;
-                loseEffect?.Play();
+                // loseEffect?.Play();
                 break;
             case BattleResult.Draw:
                 resultText.text = "DRAW";
                 resultText.color = Color.gray;
-                drawEffect?.Play();
+                // drawEffect?.Play();
                 break;
         }
 
@@ -219,11 +232,14 @@ public class ResultSceneController : MonoBehaviour
 
         await resultText.DOFade(1f, 1f).SetEase(Ease.OutQuad).AsyncWaitForCompletion();
         await resultText.transform.DOScale(1.2f, 0.5f).SetLoops(2, LoopType.Yoyo).AsyncWaitForCompletion();
+
+        
     }
 
 
     private async UniTask ShowMenuAsync()
     {
-        await UniTask.Delay(1);
+        await UniTask.Delay(500);
+        resultUI.SetActive(true);
     }
 }

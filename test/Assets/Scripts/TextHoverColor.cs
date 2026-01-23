@@ -26,10 +26,14 @@ public class TextHoverColor : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
         if (cachedSceneManager == null)
             Debug.LogWarning("MySceneManager がシーンに存在しません！");
+
+        if (targetText != null)
+            targetText.color = normalColor;
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        Debug.Log("ENTER");
         if (targetText != null)
             targetText.color = hoverColor;
     }
@@ -44,6 +48,19 @@ public class TextHoverColor : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     public async void OnPointerClick(PointerEventData eventData)
     {
         await FadeManager.Instance.FadeOut();
-        cachedSceneManager.LoadMain();
+        switch (sceneTag) 
+        {
+            case MySceneManager.SceneTag.Title:
+                cachedSceneManager.LoadTitle();
+                break;
+
+            case MySceneManager.SceneTag.Main:
+                cachedSceneManager.LoadMain();
+                break;
+
+            case MySceneManager.SceneTag.Result:
+                cachedSceneManager.LoadResult();
+                break;
+        }
     }
 }

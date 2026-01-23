@@ -107,6 +107,8 @@ public class BattleManager : MonoBehaviour
     private List<MonsterStatus> playerStatuses = new();
     private List<MonsterStatus> cpuStatuses = new();
 
+    [SerializeField] private GameObject LastBlowEffect;
+
     private void Awake()
     {
         // シングルトン実装
@@ -614,7 +616,9 @@ public class BattleManager : MonoBehaviour
     private async UniTask PlayLastBlowSlowMotion()
     {
         Time.timeScale = 0.2f;
+        LastBlowEffect.SetActive(true);
         await UniTask.Delay(700, ignoreTimeScale: true);
+        LastBlowEffect.SetActive(false);
         Time.timeScale = 1f;
     }
 

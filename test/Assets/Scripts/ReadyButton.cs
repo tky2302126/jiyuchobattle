@@ -16,8 +16,7 @@ public class ReadyButton : MonoBehaviour
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private MonsterCardGenerator cardGenerator;
     [SerializeField] private CPUController CPU;
-
-    private TextToImage _t2I = new TextToImage();
+    [SerializeField] private CanvasGroup canvasGroup;
 
     // Start is called before the first frame update
     void Start()
@@ -30,10 +29,12 @@ public class ReadyButton : MonoBehaviour
     {
         if (BattleManager.Instance == null) return;
 
-        bool isWaitingForReady =
-            BattleManager.Instance.CurrentState == BattleManager.BattleState.WaitingForReady;
+        bool isWaiting =
+        BattleManager.Instance.CurrentState == BattleManager.BattleState.WaitingForReady;
 
-        gameObject.SetActive(isWaitingForReady);
+        canvasGroup.alpha = isWaiting ? 1 : 0;
+        canvasGroup.interactable = isWaiting;
+        canvasGroup.blocksRaycasts = isWaiting;
     }
 
     public void OnClick() 

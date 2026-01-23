@@ -21,7 +21,7 @@ public class TitleToMenu : MonoBehaviour
     private bool isTransitioning = false;
     private Vector2 logoStartPosition;
 
-    async void Start()
+    void Start()
     {
         if (FadeManager.Instance != null)
         {
