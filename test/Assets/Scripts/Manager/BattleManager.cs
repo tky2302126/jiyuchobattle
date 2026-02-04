@@ -119,13 +119,13 @@ public class BattleManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject); // 任意：シーンをまたいで保持したい場合のみ
+       // DontDestroyOnLoad(gameObject); // 任意：シーンをまたいで保持したい場合のみ
     }
 
-    private void Start()
+    private async void Start()
     {
-        InitializeAsync().Forget();
-        cameraMover.MoveCameraToSetupAsync(5f).Forget();
+        await cameraMover.MoveCameraToSetupAsync(5f);
+        await InitializeAsync();
     }
 
     /// <summary>

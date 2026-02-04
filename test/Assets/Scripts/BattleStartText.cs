@@ -8,6 +8,7 @@ public class BattleStartText : MonoBehaviour
     [SerializeField] private TextMeshProUGUI cpuCardNameText;
     [SerializeField] private TextMeshProUGUI playerCardNameText;
     [SerializeField] private GameObject VSsprite;
+    [SerializeField] private GameObject backGround;
 
     [SerializeField] private float fadeDuration = 0.5f;
     [SerializeField] private float stayDuration = 1.0f;
@@ -20,6 +21,7 @@ public class BattleStartText : MonoBehaviour
         cpuCardNameText.gameObject.SetActive(false);
         playerCardNameText.gameObject.SetActive(false);
         VSsprite.SetActive(false);
+        backGround.SetActive(false);
     }
     public void SetPlayerMonsterName(string name) 
     {
@@ -46,6 +48,7 @@ public class BattleStartText : MonoBehaviour
         cpuCardNameText.gameObject.SetActive(true);
         playerCardNameText.gameObject.SetActive(true);
         VSsprite.SetActive(true);
+        backGround.SetActive(true);
 
         // フェードイン
         yield return Fade(0f, 1f, fadeDuration);
@@ -64,6 +67,7 @@ public class BattleStartText : MonoBehaviour
         cpuCardNameText.gameObject.SetActive(false);
         playerCardNameText.gameObject.SetActive(false);
         VSsprite.SetActive(false);
+        backGround.SetActive(false);
     }
 
     private IEnumerator Fade(float from, float to, float duration)

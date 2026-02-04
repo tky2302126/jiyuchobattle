@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using System.Linq;
 using static SDController;
+using Unity.VisualScripting;
 
 
 public class MonsterCardGenerator : MonoBehaviour
@@ -112,18 +113,55 @@ public class MonsterCardGenerator : MonoBehaviour
 
     private async UniTask MoveAndFlipCards(List<GameObject> cards, Transform spawnPoint)
     {
-        float duration = 0.3f;
-        var moveTasks = cards.Select(c =>
-            c.transform.DOMove(spawnPoint.position, duration).SetEase(Ease.InOutSine).AsyncWaitForCompletion().AsUniTask()
-        ).ToList();
+        var textObjs = new List<Transform>();
+        var zoomTasks = new List<UniTask>();
 
+        foreach(var card in cards) 
+        {
+            var textObj = card.transform.Find("Title");
+            if (textObj == null) continue;
+            textObjs.Add(textObj);
+            Vector3 targetPos = textObj.position + new Vector3(0, 0, -3.0f);
+
+            zoomTasks.Add(
+            textObj.DOMove(targetPos, 0.4f)
+                .SetEase(Ease.OutCubic)
+                .AsyncWaitForCompletion()
+                .AsUniTask()
+            );
+        }
+
+        await UniTask.WhenAll(zoomTasks);
+
+        float duration = 2.0f; 
+        var moveTasks = cards.Select(c => c.transform
+                             .DOMove(spawnPoint.position, duration)
+                             .SetEase(Ease.InOutSine)
+                             .AsyncWaitForCompletion()
+                             .AsUniTask()).ToList();
         await UniTask.WhenAll(moveTasks);
+
+        var fadeTasks = new List<UniTask>();
+
+        foreach (var target in textObjs)
+        {
+            var tmp = target.GetComponent<TMPro.TextMeshPro>();
+            if (tmp == null) continue;
+
+            fadeTasks.Add(
+                tmp.DOFade(0f, 0.2f)
+                    .AsyncWaitForCompletion()
+                    .AsUniTask()
+            );
+        }
+
+        await UniTask.WhenAll(fadeTasks);
 
         var flipTasks = new List<UniTask>();
         foreach (var c in cards)
         {
             flipTasks.Add(c.transform.DORotate(new Vector3(0, 180, 0), 0.4f).AsyncWaitForCompletion().AsUniTask());
-            flipTasks.Add(c.transform.DOMoveZ(c.transform.position.z + 0.2f, 0.4f).AsyncWaitForCompletion().AsUniTask());
+            flipTasks.Add(c.transform.DOMoveZ(c.transform.position.z + 0.2f, 0.1f).AsyncWaitForCompletion().AsUniTask());
         }
         await UniTask.WhenAll(flipTasks);
     }
@@ -463,9 +501,50 @@ public class MonsterCardGenerator : MonoBehaviour
         new RequestedBar() { RequestID = requestID, Progressbar = progressBar };
         /// idと一緒にラップして送る
         await SetIllust(renderer, sourceData, progressBar);
-        
+
         // --- 回転（表向きに） ---
-        await newCard.transform.DORotateQuaternion(endRot, 0.5f).SetEase(Ease.InOutSine).AsyncWaitForCompletion();
+        // await newCard.transform.DORotateQuaternion(endRot, 0.5f).SetEase(Ease.InOutSine).AsyncWaitForCompletion();
+
+        Transform t = newCard.transform;
+
+        Vector3 originalPos = t.position;
+        Vector3 originalScale = t.localScale;
+
+        DG.Tweening.Sequence seq = DOTween.Sequence();
+
+        seq.Append(newCard.transform
+            .DOMoveY(newCard.transform.position.y + 0.5f, 0.2f)
+            .SetEase(Ease.OutQuad));
+
+        seq.Join(newCard.transform
+            .DOScale(1.2f, 0.2f)
+            .SetEase(Ease.OutBack));
+
+        seq.Append(newCard.transform
+            .DORotateQuaternion(endRot, 0.4f)
+            .SetEase(Ease.InOutSine));
+
+        seq.Append(t
+            .DOMove(originalPos, 0.2f)
+            .SetEase(Ease.InQuad));
+
+        seq.Append(newCard.transform
+            .DOScale(1f, 0.2f)
+            .SetEase(Ease.OutBounce));
+
+        seq.Join(newCard.transform
+            .DOPunchScale(Vector3.one * 0.3f, 0.4f, 8, 0.8f));
+
+        seq.AppendCallback(() =>
+        {
+            t.localPosition = originalPos;
+            t.localScale = originalScale;
+        });
+
+        Camera.main.transform
+            .DOShakePosition(0.3f, 0.2f);
+
+        await seq.AsyncWaitForCompletion();
 
         return newCard;
     }

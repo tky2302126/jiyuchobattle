@@ -38,6 +38,7 @@ public class Drag3DObject : MonoBehaviour
                 if (hit.collider != null)
                 {
                     if (!hit.collider.CompareTag("Card")) return;
+                    AudioManager.Instance.PlaySE("Click");
                     Card = hit.collider.gameObject;
                     zCoord = mainCamera.WorldToScreenPoint(Card.transform.position).z;
 
@@ -86,6 +87,7 @@ public class Drag3DObject : MonoBehaviour
                     AddBattleLog("フィールドスロットに置けません。手札に戻します。");
                     Card.transform.position = handSlot.position;
                     if (!cardsInHandSlot.Contains(Card)) cardsInHandSlot.Add(Card);
+                    AudioManager.Instance.PlaySE("Cancel");
                 }
                 else
                 {
@@ -97,6 +99,7 @@ public class Drag3DObject : MonoBehaviour
             {
                 Card.transform.position = handSlot.transform.position;
                 cardsInHandSlot.Add(Card);
+                AudioManager.Instance.PlaySE("CardSet");
             }
             UpdateCardPositions();
             Card = null;
